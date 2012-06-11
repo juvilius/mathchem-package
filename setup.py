@@ -1,7 +1,7 @@
 import os
 from setuptools import setup, find_packages
 
-from myapp import VERSION
+from src import VERSION
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -9,14 +9,14 @@ def read(fname):
 requirements = []
 
 setup(
-    name = "My App",
+    name = "MathChem",
     version = ".".join(map(str, VERSION)),
     description = "",
     long_description = read('README.rst'),
     url = '',
     license = 'MIT',
-    author = 'Full Name',
-    author_email = 'email@email.org',
+    author = 'Alexander Vasilyev',
+    author_email = 'hamster3d@gmail.com',
     packages = find_packages(exclude=['tests']),
     classifiers = [
         'Development Status :: 3 - Alpha',
@@ -26,7 +26,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        #'Framework :: Django',
     ],
     install_requires = requirements,
     tests_require = ["nose",],

@@ -1,4 +1,8 @@
-App Name
+     |
+MatH-C-Hem
+     |
+
 ======================================
 
-Description
+Math Chemistry package.
+Description will be added later.
