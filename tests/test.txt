@@ -1,0 +1,10 @@
+m = Mol('FhCgG')
+M = Molecule(m.edges())
+g = Graph(m.edges())
+
+
+
+3,4 - Dimethylhexane
+C8H18
+
+'GhCH?_'
