@@ -1,1 +1,1 @@
-from mathchem import Mol
+from mathchem import *

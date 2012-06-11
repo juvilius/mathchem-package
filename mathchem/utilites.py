@@ -1,5 +1,4 @@
-from old import *
-from mathchem_mol import *
+from mathchem import *
 from sage.matrix.constructor import *
     
 def read_molecules_from_directory( path, mask="*.sdf"):
