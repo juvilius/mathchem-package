@@ -13,7 +13,7 @@ setup(
 #    version = ".".join(map(str, VERSION)),
     version = "0.1",
     description = "",
-    long_description = read('README.rst'),
+#    long_description = read('README.rst'),
     url = '',
     license = 'MIT',
     author = 'Alexander Vasilyev',
@@ -26,7 +26,7 @@ setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python',
+        'Programming Language :: Python'
     ],
     install_requires = requirements,
 #    tests_require = ["nose",],
