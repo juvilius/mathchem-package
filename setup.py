@@ -7,13 +7,15 @@ def read(fname):
 
 setup(
     name = "mathchem",
+    summary = "Molecular class with topological indices calculation methods",
     version = "0.1",
     description = "",
-    long_description = read('README.rst'),
-    url = '',
+    long_description = read('README.md'),
+    url = 'https://github.com/hamster3d/mathchem-package',
     license = 'MIT',
     author = 'Alexander Vasilyev',
     author_email = 'hamster3d@gmail.com',
+    platform = 'any',
     packages = find_packages(exclude=['tests']),
     classifiers = [
         'Development Status :: 3 - Alpha',
