@@ -18,8 +18,8 @@ setup(
     license = 'MIT',
     author = 'Alexander Vasilyev',
     author_email = 'hamster3d@gmail.com',
-    packages = ['src'],
-    #packages = find_packages(exclude=['tests']),
+    #packages = ['src'],
+    packages = find_packages(exclude=['tests']),
     classifiers = [
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
