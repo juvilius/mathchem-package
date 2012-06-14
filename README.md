@@ -50,9 +50,9 @@ numpy
 
 ###As Sage module
 
-Download *spkg* file from <https://github.com/downloads/hamster3d/mathchem-package/mathchem-0.1.0.spkg>
+Download **spkg** file from <https://github.com/downloads/hamster3d/mathchem-package/mathchem-0.1.0.spkg>
 
-Save it into your *sage* directory
+Save it into your **sage** directory
 
 Run sage with command to install a new package:
 
@@ -60,15 +60,15 @@ Run sage with command to install a new package:
     sage -f mathchem-0.1.0.spkg
 
 
-After that you can use *matchem* in your sage programs:
+After that you can use **matchem** in your sage programs:
 
-    import mathchem as mc
-    m = mc.Mol('GhCH?_')
-    s = m.sage_graph()
-    s.show()
+    sage: import mathchem as mc
+    sage: m = mc.Mol('GhCH?_')
+    sage: s = m.sage_graph()
+    sage: s.show()
 
 ##Usage
-After successfull installation you can immediately use *mathchem* in Python or Sage
+After successfull installation you can immediately use **mathchem** in Python or Sage
     
     python
     >>> import mathchem as mc
