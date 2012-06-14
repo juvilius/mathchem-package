@@ -64,6 +64,26 @@ After that you can use *matchem* in your sage programs:
 
     import mathchem as mc
     m = mc.Mol('GhCH?_')
-    m.estrada_index()
+    s = m.sage_graph()
+    s.show()
 
-
+##Usage
+After successfull installation you can immediatelly use *mathchem* in Python or Sage
+    
+    python
+    >>> import mathchem as mc
+    >>> m = mc.Mol('GhCH?_')
+    >>> m
+    
+    Molecular graph on 8 vertices
+    
+    >>> m.laplacian_matrix()
+    
+    matrix([[ 1, -1,  0,  0,  0,  0,  0,  0],
+            [-1,  2, -1,  0,  0,  0,  0,  0],
+            [ 0, -1,  3, -1,  0,  0, -1,  0],
+            [ 0,  0, -1,  3, -1,  0,  0, -1],
+            [ 0,  0,  0, -1,  2, -1,  0,  0],
+            [ 0,  0,  0,  0, -1,  1,  0,  0],
+            [ 0,  0, -1,  0,  0,  0,  1,  0],
+            [ 0,  0,  0, -1,  0,  0,  0,  1]])
