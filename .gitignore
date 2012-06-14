@@ -1,4 +1,6 @@
-*.pyc
 .DS_Store
-mathchem-package.esproj
-
+makeit.txt
+*.pyc
+*.esproj
+mathchem.egg-info
+dist/*

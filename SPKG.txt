@@ -1,0 +1,1 @@
+Mathematical chemistry package. Calculates various topological indices. Can be easily combined with Sage Graph class.
