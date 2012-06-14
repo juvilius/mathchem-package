@@ -68,7 +68,7 @@ After that you can use *matchem* in your sage programs:
     s.show()
 
 ##Usage
-After successfull installation you can immediatelly use *mathchem* in Python or Sage
+After successfull installation you can immediately use *mathchem* in Python or Sage
     
     python
     >>> import mathchem as mc
