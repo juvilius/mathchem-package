@@ -6,4 +6,4 @@
 
 
 from mathchem import *
-from utilites import *
+from utilities import *
