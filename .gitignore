@@ -1,5 +1,5 @@
 .DS_Store
-makeit.txt
+makeit.md
 *.pyc
 *.esproj
 mathchem.egg-info
