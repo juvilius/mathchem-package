@@ -1,10 +1,10 @@
 ##What is Mathchem?
 
-Mathchem is an open source Python package for calculating topological indices and other invariants of molecular graphs. Currently it has version 0.1.0. This means that the package is on a very early stage of development. It was not fully tested and any feedback is welcome.
+Mathchem is a free open source Python package for calculating topological indices and other invariants of molecular graphs. Currently it has version 0.1.0. This means that the package is on a very early stage of development. It was not fully tested and any feedback is welcome.
 
 The sources are hosted by Github: <https://github.com/hamster3d/mathchem-package>
 
-The package was tested under Mac OS X. Since the package contains no compiled code it is crossplatform and could be used in any operating system compatible with Python.
+The package was tested under Mac OS X. Since the package contains no compiled code it is cross-platform and could be used in any operating system compatible with Python.
 
 ##Usage
 
@@ -178,7 +178,7 @@ For performance reasons we calculate data only when it is needed and then we sav
 
 For instance we want to calculate three indices based on distance, let say, *Eccentric Connectivity Index*, *Balaban J index* and *Wiener Index*. This means that we need a *distance matrix*, which we calculate only once and then use it:
 
-    ~~~~~~~~~~~~~~~~~~ {.python .numberLines}
+~~~~~~~~~~~~~~~~~~ {.python .numberLines}
     >>> import mathchem as mc
     >>> m = mc.Mol('GhCH?_')
     >>> print m.eccentric_connectivity_index(), m.balaban_j_index(), m.wiener_index()

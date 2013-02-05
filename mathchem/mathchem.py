@@ -5,6 +5,8 @@ class Mol ():
     """
     # Adjacency matrix
     __A = []
+    # Incidence matrix
+    __B = []
     # Laplacian matrix
     __L = []
     # Normalized laplacian matrix
@@ -34,6 +36,54 @@ class Mol ():
     
     __Is_connected = None
     
+    def _reset_(self):
+        """ Reset all attributes """
+        # Adjacency matrix
+        self.__A = []
+        # Incidence matrix
+        self.__B = []
+        # Laplacian matrix
+        self.__L = []
+        # Normalized laplacian matrix
+        self.__NL = []
+        # Signless laplacian matrix
+        self.__Q = []
+        # Distance matrix
+        self.__D = []
+        # Resistance Distance matrix
+        self.__RD = []
+    
+        self.__Order = 0
+        self.__Edges = []
+        
+        self.__Sage_graph = None
+        self.__NX_graph = None
+        
+        self.__Degrees = []
+        
+        
+        self.__Spectrum = []
+        self.__Laplacian_spectrum = []
+        self.__Distance_spectrum = []
+        self.__Norm_laplacian_spectrum = []
+        self.__Signless_laplacian_spectrum = []
+        self.__RD_spectrum = []
+        
+        self.__Is_connected = None
+    
+    # allow to set structure from somewhere
+    # used in utilites
+    
+    def _set_A(self, A):
+        self.__A = A
+        
+    def _set_Edges(self, edges):
+        self.__Edges = edges
+        
+    def _set_Order(self, order):
+        self.__Order = order
+    
+    # native method to initialize Mol class is to provide g6 string
     def __init__(self, g6str=None):
         """ Molecular graph class """
         if g6str != None:
@@ -86,7 +136,10 @@ class Mol ():
         """ Initialize graph from graph6 string """
         def graph_bit(pos,off):
             return ( (ord(s[off + 1+ pos/6]) - 63) & (2**(5-pos%6)) ) != 0
-
+        
+        # reset all the attributes before changing the structure    
+        self._reset_()
+        
         n = ord(s[0]) - 63
         off = 0
         if n==63:
@@ -113,8 +166,17 @@ class Mol ():
                 j+=1
             else:
                 i+=1
-
-            
+    
+    
+    def write_dot_file(self, filename):
+    
+        f_out = open(filename, 'w')
+        f_out.writelines('graph Mol {\n')
+        for (i,j) in self.edges():
+            f_out.writelines( '    ' + str(i) + ' -- ' + str(j) +';\n')
+        f_out.writelines('}')    
+        f_out.close()
+                    
     #
     #
     # matrices
@@ -129,6 +191,25 @@ class Mol ():
         return self.__A
         
     A = adjacency_matrix
+    
+    def incidence_matrix(self):
+        """ Return Incidence matrix 
+        
+        Alias: B
+        """
+        if self.__B == []:
+            def func((u,v)):
+                col = [0] * self.__Order
+                col[u] = 1
+                col[v] = 1
+                return col
+            # apply func to each edge
+            b = map(lambda e: func(e), self.edges())
+            # transpose the result
+            self.__B = map(list, zip(*b)) 
+        return self.__B
+        
+    B = incidence_matrix
 
 
     def laplacian_matrix(self):
@@ -338,7 +419,7 @@ class Mol ():
                 from numpy import linalg as la
                 s = la.eigvalsh(self.laplacian_matrix()).tolist()
                 s.sort(reverse=True)
-                self.__Laplacian_spectrum = s
+                self.__Laplacian_spectrum = map(lambda x: x if x>0 else 0,s)
             return self.__Laplacian_spectrum
             
         elif matrix == "distance" or matrix == "D":
@@ -355,7 +436,7 @@ class Mol ():
                 from numpy import linalg as la
                 s = la.eigvalsh(self.signless_laplacian_matrix()).tolist()
                 s.sort(reverse=True)
-                self.__Signless_laplacian_spectrum = s
+                self.__Signless_laplacian_spectrum = map(lambda x: x if x>0 else 0,s)
             return self.__Signless_laplacian_spectrum  
 
         elif matrix == "normalized_laplacian" or matrix == "NL":
@@ -399,8 +480,16 @@ class Mol ():
         parameters: matrix - see spectrum help
         """
         return sum( map( lambda x: abs(x) ,self.spectrum(matrix)))
-        
-    
+                
+                
+    def incidence_energy(self):
+        """ Return incidence energy (IE)
+            
+        Incidence energy is the sum of singular values of incidence matrix
+        """
+        if self.__Order == 0: return []
+        from numpy.linalg import svd
+        return sum(svd(self.incidence_matrix(), compute_uv=False))
 
     #
     #
@@ -478,7 +567,7 @@ class Mol ():
     
     
     def degree_distance(self):
-        """ Calculates Distance Degree (DD)
+        """ Calculates Degree Distance (DD)
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
@@ -558,6 +647,19 @@ class Mol ():
             return False 
         return self.distance_matrix().sum() / 2
         
+    def terminal_wiener_index(self):
+        """ Calculate Terminal Wiener Index (TW)
+        
+        TW = Sum of all distances between pendent vertices (with degree = 1)
+        """
+        if not self.is_connected(): return False
+        s = 0
+        for u in range(self.order()):
+            if self.degrees()[u] != 1: continue
+            for v in range(u+1, self.order()):
+                if self.degrees()[v] == 1:
+                    s = s + self.distance_matrix()[u,v]
+        return s
 
     def reverse_wiener_index(self):
         """ Calculates Reverse Wiener Index (RW)
@@ -599,8 +701,196 @@ class Mol ():
         if not self.is_connected():
             return False         
         return self.reciprocal_distance_matrix().sum()
+        
+    def LEL(self):
+        """ Return Laplacian-like energy (LEL) """
+        from numpy import sqrt
+        return sum( map( lambda x: sqrt(x) ,self.spectrum('laplacian')))
+
+
+    # Adriatic indices
+    
+    def adriatic_index(self, func, inv):
+        """ Adriatic index """
+        if inv == 'degree': d = self.degrees()
+        elif inv == 'distance': d = self.distance_matrix().sum(axis=0).tolist()[0]
+        
+        return sum( map( lambda (u,v): func(d[u],d[v]), self.edges()) )
+
             
+    def randic_type_lodeg_index (self):
+        """ Adriatic index: Randic-type lodeg index"""
+        from numpy import log
+        
+        def func(du, dv):
+            return log(du)*log(dv)
+            
+        return self.adriatic_index(func,'degree')
+
+        
+    def randic_type_sdi_index (self):
+        """ Adriatic index: Randic-type sdi index"""
+        
+        def func(du, dv):
+            return du*du*dv*dv
+            
+        return self.adriatic_index(func,'distance')
+
+
+    def randic_type_hadi_index (self):
+        """ Adriatic index: Randic-type hadi index"""
+        
+        def func(du, dv):
+            return .5**(du+dv)
+            
+        return self.adriatic_index(func,'distance')
+                
+        
+    def sum_lordeg_index (self):
+        """ Adriatic index: sum lordeg index"""
+        from numpy import log
+        # here we use more easy for calculations formula
+        return sum(map( lambda d: d*(log(d)**.5)  , self.degrees() ))
+    
+    
+    def inverse_sum_lordeg_index(self):
+        """ Adriatic index: inverse sum lordeg index"""
+        from numpy import log
+        
+        def func(du, dv):
+            return 1.0 / (log(du)**.5 + log(dv)**.5)
+            
+        return self.adriatic_index(func,'degree')
+    
+        
+    def inverse_sum_indeg_index(self):
+        """ Adriatic index: inverse sum indeg index"""
+        
+        def func(du, dv):
+            return du*dv / (du + dv)
+            
+        return self.adriatic_index(func,'degree')
+    
+        
+    def misbalance_lodeg_index(self):
+        """ Adriatic index: misbalance lodeg index"""
+        from numpy import log
+        
+        def func(du, dv):
+            return abs( log(du) - log(dv) )
+            
+        return self.adriatic_index(func,'degree')
+    
+        
+    def misbalance_losdeg_index(self):
+        """ Adriatic index: misbalance losdeg index"""
+        from numpy import log
+        
+        def func(du, dv):
+            return abs( log(du)**2 - log(dv)**2 )
+            
+        return self.adriatic_index(func,'degree')
+    
+        
+    def misbalance_indeg_index(self):
+        """ Adriatic index: misbalance indeg index"""
+        
+        def func(du, dv):
+            return abs( 1.0/du - 1.0/dv)
+            
+        return self.adriatic_index(func,'degree')
+    
+    
+    def misbalance_irdeg_index(self):
+        """ Adriatic index: misbalance irdeg index"""
+        
+        def func(du, dv):
+            return abs( 1.0/du**.5 - 1.0/dv**.5)
+            
+        return self.adriatic_index(func,'degree')
+        
+        
+    def misbalance_rodeg_index(self):
+        """ Adriatic index: misbalance rodeg index"""
+        
+        def func(du, dv):
+            return abs( du**.5 - dv**.5)
+            
+        return self.adriatic_index(func,'degree')
+            
+            
+    def misbalance_deg_index(self):
+        """ Adriatic index: misbalance deg index"""
+        
+        def func(du, dv):
+            return abs( du - dv)
+            
+        return self.adriatic_index(func,'degree')
+            
+    
+    def misbalance_hadeg_index(self):
+        """ Adriatic index: misbalance hadeg index"""
+        
+        def func(du, dv):
+            return abs( 2**(-du) - 2**(-dv))
+            
+        return self.adriatic_index(func,'degree')
+                    
+    
+    def misbalance_indi_index(self):
+        """ Adriatic index: misbalance indi index"""
+        
+        def func(du, dv):
+            return abs( 1.0/du - 1.0/dv)
+            
+        return self.adriatic_index(func,'distance')
+            
+            
+    def min_max_rodeg_index(self):
+        """ Adriatic index: min-max rodeg index"""
+        
+        def func(du, dv):
+            return ( min(dv,du) / max(dv,du) )**.5
+            
+        return self.adriatic_index(func,'degree')        
+                
+        
+    def min_max_sdi_index(self):
+        """ Adriatic index: min-max sdi index"""
+        
+        def func(du, dv):
+            return ( min(dv,du) / max(dv,du) )**2
+            
+        return self.adriatic_index(func,'distance')  
+    
+    
+    def max_min_deg_index(self):
+        """ Adriatic index: max-min deg index"""
+        
+        def func(du, dv):
+            return max(dv,du) / min(dv,du)
+            
+        return self.adriatic_index(func,'degree')
+    
+    
+    def max_min_sdeg_index(self):
+        """ Adriatic index: max-min sdeg index"""
+        
+        def func(du, dv):
+            return ( max(dv,du) / min(dv,du) )**2
+            
+        return self.adriatic_index(func,'degree')
+    
+    
+    def symmetric_division_deg_index(self):
+        """ Adriatic index: symmetric division deg index"""
+        
+        def func(du, dv):
+            # it is faster then min / max + max / min
+            return  float(du + dv)**2 / du*dv - 2
+
+        return self.adriatic_index(func,'degree')
         
         
         
-        
+    

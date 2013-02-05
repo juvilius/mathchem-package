@@ -1,0 +1,8 @@
+graph Mol {
+    a -- b ;
+    b -- c ;
+    c -- d ;
+    d -- a ;
+    { rank=same; a, b}
+    { rank=same; d, c}
+}
