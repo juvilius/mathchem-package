@@ -1,6 +1,6 @@
 ##What is Mathchem?
 
-Mathchem is a free open source Python package for calculating topological indices and other invariants of molecular graphs. Currently it has version 0.1.0. This means that the package is on a very early stage of development. It was not fully tested and any feedback is welcome.
+Mathchem is a free open source Python package for calculating topological indices and other invariants of molecular graphs. Currently it has version 0.1.1. This means that the package is on a very early stage of development. It was not fully tested and any feedback is welcome.
 
 The sources are hosted by Github: <https://github.com/hamster3d/mathchem-package>
 

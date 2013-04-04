@@ -1,8 +1,10 @@
+import numpy as np
 
 class Mol ():
     r"""
     Molecule.
     """
+    __g6_string = ''
     # Adjacency matrix
     __A = []
     # Incidence matrix
@@ -35,9 +37,12 @@ class Mol ():
     __RD_spectrum = []
     
     __Is_connected = None
+    # Switch it to False when we know that the graph is connected. Useful for big calculations
+    __Check_connectedness = True
     
     def _reset_(self):
         """ Reset all attributes """
+        self.__g6_string = ''
         # Adjacency matrix
         self.__A = []
         # Incidence matrix
@@ -84,21 +89,35 @@ class Mol ():
         self.__Order = order
     
     # native method to initialize Mol class is to provide g6 string
-    def __init__(self, g6str=None):
+    def __init__(self, g6str=None, check_connectedness=True):
         """ Molecular graph class """
+        self.__Check_connectedness = check_connectedness
         if g6str != None:
             self.read_g6(g6str)
         
           
     def __repr__(self):
-        if self.__A != None: return  'Molecular graph on '+ str(self.__Order)+' vertices'
+        if self.__A != None: return  'Molecular graph on '+ str(self.__Order)+' vertices, g6: ' + self.__g6_string
         return 'Empty Molecular graph'
         
     def __len__(self):
         if self.__A != None: return len(self.__A)
         else: return 0
-            
-      
+    
+    def set_check_connectedness(self, c):
+        """ Switch on/off of checking connectedness for the graph. Might be useful in batch calculations to economy time.
+        args: c (True/False)
+        """
+        self.check_connectedness = c
+
+    def g6_string()
+        """ Return a graph6 string representation of the graph
+        
+        Alias: graph6_string """
+        return self.__g6_string
+    # alias like in Sage:    
+    graph6_string = g6_string
+    
     def order(self):
         """ Return number of vertices """
         return self.__Order
@@ -166,6 +185,8 @@ class Mol ():
                 j+=1
             else:
                 i+=1
+                
+        self.__g6_string = s
     
     
     def write_dot_file(self, filename):
@@ -222,7 +243,6 @@ class Mol ():
         Alias : L
         """
         if self.__L == []:
-            import numpy as np;
             self.__L = np.diag(self.degrees()) - np.matrix(self.__A);
         return self.__L
         
@@ -236,7 +256,7 @@ class Mol ():
         Alias : Q
         """
         if self.__Q == []:
-            import numpy as np;
+
             self.__Q = np.diag(self.degrees()) + np.matrix(self.__A);
         return self.__Q
         
@@ -251,7 +271,6 @@ class Mol ():
         """
         ## TODO: check if we have zeros in degrees()
         if self.__NL  == []:
-            import numpy as np;
             d1 = np.diag( np.power( self.degrees(), -.5 ))
             d2 = np.diag( np.power( self.degrees(),  .5 ))
             self.__NL = d1 * self.laplacian_matrix() * d2
@@ -268,7 +287,6 @@ class Mol ():
         if self.__Order == 0: return []
         
         if self.__D == [] :
-            import numpy as np;
             # use here float only for using np.inf - infinity
             A = np.matrix(self.__A, dtype=float)
             n,m = A.shape
@@ -287,8 +305,6 @@ class Mol ():
     def reciprocal_distance_matrix(self):
         """ Return Reciprocal Distance matrix """
 
-        import numpy as np;
-
         rd = np.matrix(self.distance_matrix(),dtype=float)
         # probably there exists more python way to apply a function to each element of matrix
         for i in range(self.__Order):
@@ -305,7 +321,6 @@ class Mol ():
             return False
             
         if self.__RD == []:
-            import numpy as np
             #from numpy import linalg as la
             n = self.__Order
             s = n*self.laplacian_matrix() + 1
@@ -313,7 +328,7 @@ class Mol ():
             RD = np.ndarray((n,n))
             for i in range(n):
                 for j in range(n):
-                    RD[i,j] = sn[i,i] + sn[j,j] - 2*sn[i,j]
+                    RD[i,j] = np.float64( np.float128(sn[i,i]) + np.float128(sn[j,j]) - 2*np.float128(sn[i,j]) )
             self.__RD = RD
             
         return self.__RD
@@ -376,7 +391,9 @@ class Mol ():
     def is_connected(self):
         """ Return True/False depends on the graph is connected or not """ 
         if self.__Order == 0: return False
-         
+        
+        if not self.__Check_connectedness : return True
+        
         if self.__Is_connected is None:
             # we take vertex 0 and check whether we can reach all other vertices 
             self.__Is_connected = len(self.distances_from_vertex(0)) == self.order()
@@ -470,8 +487,7 @@ class Mol ():
         
         parameters: matrix - see spectrum help
         """
-        from numpy import power
-        return power(self.spectrum(matrix),k).tolist()
+        return np.power(self.spectrum(matrix),k).tolist()
     
         
     def energy(self, matrix="adjacency"):
@@ -479,7 +495,7 @@ class Mol ():
         
         parameters: matrix - see spectrum help
         """
-        return sum( map( lambda x: abs(x) ,self.spectrum(matrix)))
+        return np.float64(np.sum( map( lambda x: abs(x) ,self.spectrum(matrix)), dtype=np.float128))
                 
                 
     def incidence_energy(self):
@@ -489,7 +505,7 @@ class Mol ():
         """
         if self.__Order == 0: return []
         from numpy.linalg import svd
-        return sum(svd(self.incidence_matrix(), compute_uv=False))
+        return np.float64(np.sum(svd(self.incidence_matrix(), compute_uv=False), dtype=np.float128))
 
     #
     #
@@ -514,9 +530,22 @@ class Mol ():
         """ Calculates Connectivity index (R)"""
         E = self.edges() # E - all edges
         if len(E) == 0: return 0
-        return sum( map(lambda (e1 ,e2): ( self.degrees()[e1]*self.degrees()[e2] ) ** power , E) )
+        return np.float64(np.sum( map(lambda (e1 ,e2): ( self.degrees()[e1]*self.degrees()[e2] ) ** power , E) , dtype=np.float128))
 
-    
+    augmented_zagreb_index = connectivity_index
+
+    def sum_connectivity_index(self):
+        """ Calculates Sum-Connectivity index"""
+        E = self.edges() # E - all edges
+        if len(E) == 0: return 0
+        return np.float64(np.sum( map(lambda (e1 ,e2): ( self.degrees()[e1]+self.degrees()[e2] ) ** (-0.5) , E) , dtype=np.float128)) 
+        
+    def geometric_arithmetic_index(self):
+        """ Calculates Geometric-Arithmetic index"""
+        E = self.edges() # E - all edges
+        if len(E) == 0: return 0
+        return np.float64(np.sum( map(lambda (e1 ,e2): 2.0*np.sqrt(self.degrees()[e1]*self.degrees()[e2] ) / (self.degrees()[e1]+self.degrees()[e2])  , E) , dtype=np.float128)) 
+           
     def eccentric_connectivity_index(self):
         """ Calculates Eccentric Connectivity Index 
         
@@ -534,15 +563,15 @@ class Mol ():
         Randic Index is a special case of Connectivity Index with power = -1/2"""
         return self.connectivity_index(-0.5)
                         
-    
+    ### refactor it!
     def atom_bond_connectivity_index(self):
         """ Calculates Atom-Bond Connectivity Index (ABC) """
-        s = 0.0 # summator
+        s = np.float128(0) # summator
         for (u,v) in self.edges():
-            d1 = self.degrees()[u]
-            d2 = self.degrees()[v]
-            s += ( 1.0* (d1 + d2 - 2 ) / (d1 * d2)) ** .5
-        return s   
+            d1 = np.float64(self.degrees()[u])
+            d2 = np.float64(self.degrees()[v])
+            s += np.float128( ( (d1 + d2 - 2 ) / (d1 * d2)) ** .5 )
+        return np.float64(s)
     
     
     def estrada_index(self, matrix = "adjacency"):
@@ -553,8 +582,7 @@ class Mol ():
             
         There is an alias 'distance_estrada_index' for distance matrix
         """
-        from numpy import exp        
-        return sum( map( lambda x: exp( x.real ) , self.spectrum(matrix) ) ) 
+        return np.float64(np.sum( map( lambda x: np.exp( x.real ) , self.spectrum(matrix) ) ,dtype=np.float128 )) 
         
         
     def distance_estrada_index(self):
@@ -572,8 +600,7 @@ class Mol ():
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
             return False      
-        from numpy import matrix
-        dd = matrix(self.degrees()) * self.distance_matrix().sum(axis=1)
+        dd = np.matrix(self.degrees()) * self.distance_matrix().sum(axis=1)
         return dd[0,0]
         
     def reverse_degree_distance(self):
@@ -592,10 +619,10 @@ class Mol ():
         if not self.is_connected():
             return False 
         # (A+D)*d
-        from numpy import matrix
-        A = matrix(self.__A)
-        d = matrix(self.degrees())
-        return ( (A + self.distance_matrix()) * d.T ).sum()
+
+        A = np.matrix(self.__A)
+        d = np.matrix(self.degrees())
+        return np.float64(( (A + self.distance_matrix()) * d.T ).sum(dtype=np.float128))
     
         
     def eccentric_distance_sum(self):
@@ -614,11 +641,22 @@ class Mol ():
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
             return False 
-        from numpy import sqrt
         ds = self.distance_matrix().sum(axis=1)
         m = len(self.edges())
         k = (m / ( m - self.__Order +2.0 ))
-        return k * sum( map(lambda (u ,v): 1 / sqrt((ds[u][0,0]*ds[v][0,0])), self.edges() ))
+        return np.float64(k * np.sum( map(lambda (u ,v): 1 / np.sqrt((ds[u][0,0]*ds[v][0,0])), self.edges() ), dtype=np.float128))
+        
+    def sum_balaban_index(self):
+        """ Calculates Sum Balaban index 
+        
+        The molecuar graph must be connected, otherwise the function Return False"""
+        if not self.is_connected():
+            return False 
+        ds = self.distance_matrix().sum(axis=1)
+        m = len(self.edges())
+        k = (m / ( m - self.__Order +2.0 ))
+        return np.float64(k * np.sum( map(lambda (u ,v): 1 / np.sqrt((ds[u][0,0]+ds[v][0,0])), self.edges() ), dtype=np.float128))
+    
         
     def kirchhoff_index(self):
         """ Calculates Kirchhoff Index (Kf)
@@ -632,7 +670,7 @@ class Mol ():
         """
         if not self.is_connected():
             return False 
-        return self.resistance_distance_matrix().sum() / 2
+        return np.float64(self.resistance_distance_matrix().sum(dtype=np.float128) / 2)
         
     resistance = kirchhoff_index
     
@@ -645,7 +683,7 @@ class Mol ():
         """
         if not self.is_connected():
             return False 
-        return self.distance_matrix().sum() / 2
+        return self.distance_matrix().sum(dtype=np.float64) / 2
         
     def terminal_wiener_index(self):
         """ Calculate Terminal Wiener Index (TW)
@@ -684,8 +722,7 @@ class Mol ():
         """
         if not self.is_connected():
             return False         
-        from numpy import power
-        return ( power(self.distance_matrix(),2).sum() + self.distance_matrix().sum() ) / 4 # since we have symmetric matrix
+        return ( np.power(self.distance_matrix(),2).sum() + self.distance_matrix().sum() ) / 4 # since we have symmetric matrix
         
         
     def harary_index(self):
@@ -700,12 +737,11 @@ class Mol ():
         """
         if not self.is_connected():
             return False         
-        return self.reciprocal_distance_matrix().sum()
+        return np.float64(self.reciprocal_distance_matrix().sum(dtype=np.float128))
         
     def LEL(self):
         """ Return Laplacian-like energy (LEL) """
-        from numpy import sqrt
-        return sum( map( lambda x: sqrt(x) ,self.spectrum('laplacian')))
+        return np.float64(np.sum( map( lambda x: np.sqrt(x) ,self.spectrum('laplacian')), dtype=np.float128))
 
 
     # Adriatic indices
@@ -715,15 +751,14 @@ class Mol ():
         if inv == 'degree': d = self.degrees()
         elif inv == 'distance': d = self.distance_matrix().sum(axis=0).tolist()[0]
         
-        return sum( map( lambda (u,v): func(d[u],d[v]), self.edges()) )
+        return np.float64(np.sum( map( lambda (u,v): func(np.float64(d[u]),np.float64(d[v])), self.edges()) , dtype=np.float128))
 
             
     def randic_type_lodeg_index (self):
         """ Adriatic index: Randic-type lodeg index"""
-        from numpy import log
         
         def func(du, dv):
-            return log(du)*log(dv)
+            return np.log(du)*np.log(dv)
             
         return self.adriatic_index(func,'degree')
 
@@ -741,24 +776,22 @@ class Mol ():
         """ Adriatic index: Randic-type hadi index"""
         
         def func(du, dv):
-            return .5**(du+dv)
+            return .5**int(du+dv)
             
         return self.adriatic_index(func,'distance')
                 
         
     def sum_lordeg_index (self):
         """ Adriatic index: sum lordeg index"""
-        from numpy import log
         # here we use more easy for calculations formula
-        return sum(map( lambda d: d*(log(d)**.5)  , self.degrees() ))
+        return np.float64(np.sum(map( lambda d: d*(np.log(d)**.5)  , self.degrees() ),dtype=np.float128))
     
     
     def inverse_sum_lordeg_index(self):
         """ Adriatic index: inverse sum lordeg index"""
-        from numpy import log
         
         def func(du, dv):
-            return 1.0 / (log(du)**.5 + log(dv)**.5)
+            return 1.0 / (np.log(du)**.5 + np.log(dv)**.5)
             
         return self.adriatic_index(func,'degree')
     
@@ -774,20 +807,18 @@ class Mol ():
         
     def misbalance_lodeg_index(self):
         """ Adriatic index: misbalance lodeg index"""
-        from numpy import log
         
         def func(du, dv):
-            return abs( log(du) - log(dv) )
+            return abs( np.log(du) - np.log(dv) )
             
         return self.adriatic_index(func,'degree')
     
         
     def misbalance_losdeg_index(self):
         """ Adriatic index: misbalance losdeg index"""
-        from numpy import log
         
         def func(du, dv):
-            return abs( log(du)**2 - log(dv)**2 )
+            return abs( np.log(du)**2 - np.log(dv)**2 )
             
         return self.adriatic_index(func,'degree')
     
@@ -853,7 +884,15 @@ class Mol ():
             return ( min(dv,du) / max(dv,du) )**.5
             
         return self.adriatic_index(func,'degree')        
-                
+
+    def max_min_rodeg_index(self):
+        """ Adriatic index: max-min rodeg index"""
+        
+        def func(du, dv):
+            return ( max(dv,du) / min(dv,du) )**.5
+            
+        return self.adriatic_index(func,'degree')        
+                    
         
     def min_max_sdi_index(self):
         """ Adriatic index: min-max sdi index"""
@@ -887,10 +926,25 @@ class Mol ():
         
         def func(du, dv):
             # it is faster then min / max + max / min
-            return  float(du + dv)**2 / du*dv - 2
+            return  du/dv + dv/du
 
         return self.adriatic_index(func,'degree')
         
+    # --------------
         
+    def multiplicative_sum_zagreb_index(self):
+        """ Calculates Log( Multiplicative Sum Zagreb index )""" 
+        d = self.degrees()
+        return np.float64(np.sum( map( lambda (u,v): np.log(np.float64(d[u]+d[v])), self.edges()) , dtype=np.float128))
         
+    def multiplicative_p2_zagreb_index(self):
+        """Calculates Log( Multiplicative P2 Zagreb index )""" 
+        d = self.degrees()
+        return np.float64(np.sum( map( lambda (u,v): np.log(np.float64(d[u]*d[v])), self.edges()) , dtype=np.float128))
     
+    def multiplicative_p1_zagreb_index(self):
+        """Calculates Log( Multiplicative P1 Zagreb index )""" 
+        d = self.degrees()
+        return np.float64(np.sum( map( lambda v: np.log(np.float64(d[v]**2)), self.vertices()) , dtype=np.float128))
+        
+        

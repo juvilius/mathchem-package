@@ -100,9 +100,12 @@ def read_from_g6(fname):
     return mols   
 
 
-def read_from_NCI_by_name(name, hydrogens = False):
+def read_from_NCI_by_name(name, hydrogens = False, fields = []):
     import urllib
-    url = 'http://cactus.nci.nih.gov/cgi-bin/nci2.1.tcl?op1=name&data1='+name+'&method1=substring&output=sdf&nomsg=1&maxhits=1000000'
+    fields_string = ''
+    for f in fields: fields_string = fields_string + '&fields=' + urllib.quote_plus(f)
+    
+    url = 'http://cactus.nci.nih.gov/cgi-bin/nci2.1.tcl?op1=name&data1='+name+'&method1=substring&output=sdf&nomsg=1&maxhits=1000000'+ fields_string
     f = urllib.urlretrieve(url)
     return read_from_sdf(f[0], hydrogens)
 
