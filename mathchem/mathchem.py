@@ -110,7 +110,7 @@ class Mol ():
         """
         self.check_connectedness = c
 
-    def g6_string()
+    def g6_string(self):
         """ Return a graph6 string representation of the graph
         
         Alias: graph6_string """
