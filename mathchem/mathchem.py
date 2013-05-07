@@ -411,7 +411,7 @@ class Mol ():
         r""" Calculates spectrum of the graph
     
         args:
-            matrix (str)
+            matrix (str or matrix)
                 'adjacency'             or 'A' : default
                 'laplacian'             or 'L'
                 'distance'              or 'D'
@@ -419,67 +419,71 @@ class Mol ():
                 'normalized_laplacian'  or 'NL'
                 'resistance_distance'   or 'RD'
                 'reciprocal_distance'
+
+                arbitrary matrix
                 
         """
         if self.__Order == 0: return []
         
-        if matrix == "adjacency" or matrix == "A":
-            if self.__Spectrum == []:
-                from numpy import linalg as la
-                s = la.eigvalsh(self.__A).tolist()
-                s.sort(reverse=True)
-                self.__Spectrum = s
-            return self.__Spectrum
-                
-        elif matrix == "laplacian" or matrix == "L":
-            if self.__Laplacian_spectrum == []:
-                from numpy import linalg as la
-                s = la.eigvalsh(self.laplacian_matrix()).tolist()
-                s.sort(reverse=True)
-                self.__Laplacian_spectrum = map(lambda x: x if x>0 else 0,s)
-            return self.__Laplacian_spectrum
-            
-        elif matrix == "distance" or matrix == "D":
-            if self.__Distance_spectrum == []:
-                from numpy import linalg as la
-                s = la.eigvalsh(self.distance_matrix()).tolist()
-                s.sort(reverse=True)
-                self.__Distance_spectrum = s
-            return self.__Distance_spectrum  
+        from numpy import linalg as la
         
-        elif matrix == "signless_laplacian" or matrix == "Q":
-            if self.__Signless_laplacian_spectrum == []:
-                ## TODO: check if we have zeros in degrees()
-                from numpy import linalg as la
-                s = la.eigvalsh(self.signless_laplacian_matrix()).tolist()
-                s.sort(reverse=True)
-                self.__Signless_laplacian_spectrum = map(lambda x: x if x>0 else 0,s)
-            return self.__Signless_laplacian_spectrum  
+        if type(matrix) is str:
 
-        elif matrix == "normalized_laplacian" or matrix == "NL":
-            if self.__Norm_laplacian_spectrum == []:
-                ## TODO: check if we have zeros in degrees()
-                from numpy import linalg as la
-                s = la.eigvalsh(self.normalized_laplacian_matrix()).tolist()
+            if matrix == "adjacency" or matrix == "A":
+                if self.__Spectrum == []:
+                    s = la.eigvalsh(self.__A).tolist()
+                    s.sort(reverse=True)
+                    self.__Spectrum = s
+                return self.__Spectrum
+                    
+            elif matrix == "laplacian" or matrix == "L":
+                if self.__Laplacian_spectrum == []:
+                    s = la.eigvalsh(self.laplacian_matrix()).tolist()
+                    s.sort(reverse=True)
+                    self.__Laplacian_spectrum = map(lambda x: x if x>0 else 0,s)
+                return self.__Laplacian_spectrum
+                
+            elif matrix == "distance" or matrix == "D":
+                if self.__Distance_spectrum == []:
+                    s = la.eigvalsh(self.distance_matrix()).tolist()
+                    s.sort(reverse=True)
+                    self.__Distance_spectrum = s
+                return self.__Distance_spectrum  
+            
+            elif matrix == "signless_laplacian" or matrix == "Q":
+                if self.__Signless_laplacian_spectrum == []:
+                    ## TODO: check if we have zeros in degrees()
+                    s = la.eigvalsh(self.signless_laplacian_matrix()).tolist()
+                    s.sort(reverse=True)
+                    self.__Signless_laplacian_spectrum = map(lambda x: x if x>0 else 0,s)
+                return self.__Signless_laplacian_spectrum  
+    
+            elif matrix == "normalized_laplacian" or matrix == "NL":
+                if self.__Norm_laplacian_spectrum == []:
+                    ## TODO: check if we have zeros in degrees()
+                    s = la.eigvalsh(self.normalized_laplacian_matrix()).tolist()
+                    s.sort(reverse=True)
+                    self.__Norm_laplacian_spectrum = s
+                return self.__Norm_laplacian_spectrum  
+    
+            elif matrix == "resistance_distance" or matrix == "RD":
+                if self.__RD_spectrum == []:
+                    s = la.eigvalsh(self.resistance_distance_matrix()).tolist()
+                    s.sort(reverse=True)
+                    self.__RD_spectrum = s
+                return self.__RD_spectrum
+            # NO CACHE
+            elif matrix == "reciprocal_distance" :
+                s = la.eigvalsh(self.reciprocal_distance_matrix()).tolist()
                 s.sort(reverse=True)
-                self.__Norm_laplacian_spectrum = s
-            return self.__Norm_laplacian_spectrum  
-
-        elif matrix == "resistance_distance" or matrix == "RD":
-            if self.__RD_spectrum == []:
-                from numpy import linalg as la
-                s = la.eigvalsh(self.resistance_distance_matrix()).tolist()
-                s.sort(reverse=True)
-                self.__RD_spectrum = s
-            return self.__RD_spectrum
-        # NO CACHE
-        elif matrix == "reciprocal_distance" :
-            s = la.eigvalsh(self.reciprocal_distance_matrix()).tolist()
+                return s
+            else:
+                return False 
+        # if the parameter is an arbitrary matrix
+        else:
+            s = la.eigvalsh(matrix).tolist()
             s.sort(reverse=True)
             return s
-       
-        else:
-            return False        
     
     
     def spectral_moment(self, k, matrix="adjacency"):
@@ -488,6 +492,11 @@ class Mol ():
         parameters: matrix - see spectrum help
         """
         return np.power(self.spectrum(matrix),k).tolist()
+        
+    def spectral_radius(self, matrix="adjacency"):
+        s = self.spectrum(matrix)
+        return max(abs(s[0]), abs(s[len(s)-1]))
+        
     
         
     def energy(self, matrix="adjacency"):
@@ -552,8 +561,7 @@ class Mol ():
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
             return False 
-        max_dist = map(lambda row: row.max() , self.distance_matrix())
-        return sum( map( lambda a,b: a*b, self.degrees(), max_dist ) )
+        return sum( map( lambda a,b: a*b, self.degrees(), self.eccentricity() ) )
         
     
     def randic_index(self):
@@ -743,195 +751,6 @@ class Mol ():
         """ Return Laplacian-like energy (LEL) """
         return np.float64(np.sum( map( lambda x: np.sqrt(x) ,self.spectrum('laplacian')), dtype=np.float128))
 
-
-    # Adriatic indices
-    
-    def adriatic_index(self, func, inv):
-        """ Adriatic index """
-        if inv == 'degree': d = self.degrees()
-        elif inv == 'distance': d = self.distance_matrix().sum(axis=0).tolist()[0]
-        
-        return np.float64(np.sum( map( lambda (u,v): func(np.float64(d[u]),np.float64(d[v])), self.edges()) , dtype=np.float128))
-
-            
-    def randic_type_lodeg_index (self):
-        """ Adriatic index: Randic-type lodeg index"""
-        
-        def func(du, dv):
-            return np.log(du)*np.log(dv)
-            
-        return self.adriatic_index(func,'degree')
-
-        
-    def randic_type_sdi_index (self):
-        """ Adriatic index: Randic-type sdi index"""
-        
-        def func(du, dv):
-            return du*du*dv*dv
-            
-        return self.adriatic_index(func,'distance')
-
-
-    def randic_type_hadi_index (self):
-        """ Adriatic index: Randic-type hadi index"""
-        
-        def func(du, dv):
-            return .5**int(du+dv)
-            
-        return self.adriatic_index(func,'distance')
-                
-        
-    def sum_lordeg_index (self):
-        """ Adriatic index: sum lordeg index"""
-        # here we use more easy for calculations formula
-        return np.float64(np.sum(map( lambda d: d*(np.log(d)**.5)  , self.degrees() ),dtype=np.float128))
-    
-    
-    def inverse_sum_lordeg_index(self):
-        """ Adriatic index: inverse sum lordeg index"""
-        
-        def func(du, dv):
-            return 1.0 / (np.log(du)**.5 + np.log(dv)**.5)
-            
-        return self.adriatic_index(func,'degree')
-    
-        
-    def inverse_sum_indeg_index(self):
-        """ Adriatic index: inverse sum indeg index"""
-        
-        def func(du, dv):
-            return du*dv / (du + dv)
-            
-        return self.adriatic_index(func,'degree')
-    
-        
-    def misbalance_lodeg_index(self):
-        """ Adriatic index: misbalance lodeg index"""
-        
-        def func(du, dv):
-            return abs( np.log(du) - np.log(dv) )
-            
-        return self.adriatic_index(func,'degree')
-    
-        
-    def misbalance_losdeg_index(self):
-        """ Adriatic index: misbalance losdeg index"""
-        
-        def func(du, dv):
-            return abs( np.log(du)**2 - np.log(dv)**2 )
-            
-        return self.adriatic_index(func,'degree')
-    
-        
-    def misbalance_indeg_index(self):
-        """ Adriatic index: misbalance indeg index"""
-        
-        def func(du, dv):
-            return abs( 1.0/du - 1.0/dv)
-            
-        return self.adriatic_index(func,'degree')
-    
-    
-    def misbalance_irdeg_index(self):
-        """ Adriatic index: misbalance irdeg index"""
-        
-        def func(du, dv):
-            return abs( 1.0/du**.5 - 1.0/dv**.5)
-            
-        return self.adriatic_index(func,'degree')
-        
-        
-    def misbalance_rodeg_index(self):
-        """ Adriatic index: misbalance rodeg index"""
-        
-        def func(du, dv):
-            return abs( du**.5 - dv**.5)
-            
-        return self.adriatic_index(func,'degree')
-            
-            
-    def misbalance_deg_index(self):
-        """ Adriatic index: misbalance deg index"""
-        
-        def func(du, dv):
-            return abs( du - dv)
-            
-        return self.adriatic_index(func,'degree')
-            
-    
-    def misbalance_hadeg_index(self):
-        """ Adriatic index: misbalance hadeg index"""
-        
-        def func(du, dv):
-            return abs( 2**(-du) - 2**(-dv))
-            
-        return self.adriatic_index(func,'degree')
-                    
-    
-    def misbalance_indi_index(self):
-        """ Adriatic index: misbalance indi index"""
-        
-        def func(du, dv):
-            return abs( 1.0/du - 1.0/dv)
-            
-        return self.adriatic_index(func,'distance')
-            
-            
-    def min_max_rodeg_index(self):
-        """ Adriatic index: min-max rodeg index"""
-        
-        def func(du, dv):
-            return ( min(dv,du) / max(dv,du) )**.5
-            
-        return self.adriatic_index(func,'degree')        
-
-    def max_min_rodeg_index(self):
-        """ Adriatic index: max-min rodeg index"""
-        
-        def func(du, dv):
-            return ( max(dv,du) / min(dv,du) )**.5
-            
-        return self.adriatic_index(func,'degree')        
-                    
-        
-    def min_max_sdi_index(self):
-        """ Adriatic index: min-max sdi index"""
-        
-        def func(du, dv):
-            return ( min(dv,du) / max(dv,du) )**2
-            
-        return self.adriatic_index(func,'distance')  
-    
-    
-    def max_min_deg_index(self):
-        """ Adriatic index: max-min deg index"""
-        
-        def func(du, dv):
-            return max(dv,du) / min(dv,du)
-            
-        return self.adriatic_index(func,'degree')
-    
-    
-    def max_min_sdeg_index(self):
-        """ Adriatic index: max-min sdeg index"""
-        
-        def func(du, dv):
-            return ( max(dv,du) / min(dv,du) )**2
-            
-        return self.adriatic_index(func,'degree')
-    
-    
-    def symmetric_division_deg_index(self):
-        """ Adriatic index: symmetric division deg index"""
-        
-        def func(du, dv):
-            # it is faster then min / max + max / min
-            return  du/dv + dv/du
-
-        return self.adriatic_index(func,'degree')
-        
-    # --------------
-        
     def multiplicative_sum_zagreb_index(self):
         """ Calculates Log( Multiplicative Sum Zagreb index )""" 
         d = self.degrees()
@@ -948,3 +767,687 @@ class Mol ():
         return np.float64(np.sum( map( lambda v: np.log(np.float64(d[v]**2)), self.vertices()) , dtype=np.float128))
         
         
+    # Adriatic indices
+
+    
+
+    def all_adriatic(self):
+        """ Generate all possible parameters sets for adriatic indices"""
+        r = []
+        for p in [0,1]:
+            for i in [1,2,3]:
+                for j in range(1,9):
+                    if i == 3:
+                        for a in [0.5, 2]:
+                            r.append((p,i,j,a))
+                    elif i == 2 and j in range(1,6):
+                        for a in [-1, -0.5, 0.5, 1, 2]:
+                            r.append((p,i,j,a))
+                    elif i == 2 or i == 1:
+                        for a in [0.5, 1, 2]:
+                            r.append((p,i,j,a))
+        return r    
+        
+    def adriatic_name(self,p,i,j,a):
+        """ Return the name for given parameters of Adriatic indices"""
+        #(j)
+        name1 = {1:'Randic type ',\
+                 2:'sum ',\
+                 3:'inverse sum ', \
+                 4:'misbalance ', \
+                 5:'inverse misbalance ', \
+                 6:'min-max ', \
+                 7:'max-min ', \
+                 8:'symmetric division '}
+        # (i,a)         
+        name2 = {(1, 0.5):'lor',\
+                 (1,1):'lo', \
+                 (1,2):'los', \
+                 (2,-1):'in', \
+                 (2, -0.5):'ir', \
+                 (2, 0.5):'ro', \
+                 (2,1):'', \
+                 (2,2):'s', \
+                 (3, 0.5):'ha', \
+                 (3,2):'two'}
+        #(p)         
+        name3 = {0:'deg', 1:'di'}
+        
+        return(name1[j]+name2[(i,a)]+name3[p])
+        
+        
+    def _adriatic_entry_(self,du,dv,i,j,a):
+        """ Return an individual edge contribution for Adriatic indices and matrices"""
+        # phi(x,a)
+        phi = {1: lambda x,a: np.log(x)**a, 2: lambda x,a: x**a, 3: lambda x,a: a**x}
+        # gamma (x,y)
+        gamma = {\
+        1: lambda x,y: x*y,\
+        2: lambda x,y: x+y,\
+        3: lambda x,y: 0 if x+y==0 else 1.0/(x+y),\
+        4: lambda x,y: abs(x-y),\
+        5: lambda x,y: 0 if x==y else 1.0/abs(x-y),\
+        6: lambda x,y: 0 if max(x,y)==0 else min(x,y)/max(x,y),\
+        7: lambda x,y: 0 if min(x,y)==0 else max(x,y)/min(x,y),\
+        8: lambda x,y: 0 if x==0 or y==0 else x/y+y/x}
+        
+        return gamma[j](phi[i](du,a), phi[i](dv,a))
+        
+        
+    def adriatic_matrix(self,p,i,j,a):
+        """ Return the Adriatic matrix with given parameters"""
+        
+        if p==0: d = self.degrees()
+        else: d = self.distance_matrix().sum(axis=0).tolist()[0]
+        
+        AM = [[0] * self.order() for k in range(self.order())]
+        
+        for (u,v) in self.edges():
+            AM[u][v] = AM[v][u] = self._adriatic_entry_(np.float64(d[u]), np.float64(d[v]), i,j,a)
+        
+        return AM
+    
+    def adriatic_index(self,p,i,j,a):
+        """ Return the Adriatic index with given parameters"""
+
+        if p==0: d = self.degrees()
+        else: d = self.distance_matrix().sum(axis=0).tolist()[0]
+        
+        func  = lambda (u, v) : self._adriatic_entry_(np.float64(d[u]), np.float64(d[v]), i,j,a)
+        return np.float64(np.sum( map( func, self.edges()) , dtype=np.float128))
+    
+    # Adriatic indices by names
+    
+    def randic_type_lordeg_index(self):
+        """ Adriatic index: Randic type lordeg index"""
+        return self.adriatic_index(0, 1, 1, 0.5)
+
+    def randic_type_lodeg_index(self):
+        """ Adriatic index: Randic type lodeg index"""
+        return self.adriatic_index(0, 1, 1, 1)
+
+    def randic_type_losdeg_index(self):
+        """ Adriatic index: Randic type losdeg index"""
+        return self.adriatic_index(0, 1, 1, 2)
+
+    def sum_lordeg_index(self):
+        """ Adriatic index: sum lordeg index"""
+        return self.adriatic_index(0, 1, 2, 0.5)
+
+    def sum_lodeg_index(self):
+        """ Adriatic index: sum lodeg index"""
+        return self.adriatic_index(0, 1, 2, 1)
+
+    def sum_losdeg_index(self):
+        """ Adriatic index: sum losdeg index"""
+        return self.adriatic_index(0, 1, 2, 2)
+
+    def inverse_sum_lordeg_index(self):
+        """ Adriatic index: inverse sum lordeg index"""
+        return self.adriatic_index(0, 1, 3, 0.5)
+
+    def inverse_sum_lodeg_index(self):
+        """ Adriatic index: inverse sum lodeg index"""
+        return self.adriatic_index(0, 1, 3, 1)
+
+    def inverse_sum_losdeg_index(self):
+        """ Adriatic index: inverse sum losdeg index"""
+        return self.adriatic_index(0, 1, 3, 2)
+
+    def misbalance_lordeg_index(self):
+        """ Adriatic index: misbalance lordeg index"""
+        return self.adriatic_index(0, 1, 4, 0.5)
+
+    def misbalance_lodeg_index(self):
+        """ Adriatic index: misbalance lodeg index"""
+        return self.adriatic_index(0, 1, 4, 1)
+
+    def misbalance_losdeg_index(self):
+        """ Adriatic index: misbalance losdeg index"""
+        return self.adriatic_index(0, 1, 4, 2)
+
+    def inverse_misbalance_lordeg_index(self):
+        """ Adriatic index: inverse misbalance lordeg index"""
+        return self.adriatic_index(0, 1, 5, 0.5)
+
+    def inverse_misbalance_lodeg_index(self):
+        """ Adriatic index: inverse misbalance lodeg index"""
+        return self.adriatic_index(0, 1, 5, 1)
+
+    def inverse_misbalance_losdeg_index(self):
+        """ Adriatic index: inverse misbalance losdeg index"""
+        return self.adriatic_index(0, 1, 5, 2)
+
+    def min_max_lordeg_index(self):
+        """ Adriatic index: min-max lordeg index"""
+        return self.adriatic_index(0, 1, 6, 0.5)
+
+    def min_max_lodeg_index(self):
+        """ Adriatic index: min-max lodeg index"""
+        return self.adriatic_index(0, 1, 6, 1)
+
+    def min_max_losdeg_index(self):
+        """ Adriatic index: min-max losdeg index"""
+        return self.adriatic_index(0, 1, 6, 2)
+
+    def max_min_lordeg_index(self):
+        """ Adriatic index: max-min lordeg index"""
+        return self.adriatic_index(0, 1, 7, 0.5)
+
+    def max_min_lodeg_index(self):
+        """ Adriatic index: max-min lodeg index"""
+        return self.adriatic_index(0, 1, 7, 1)
+
+    def max_min_losdeg_index(self):
+        """ Adriatic index: max-min losdeg index"""
+        return self.adriatic_index(0, 1, 7, 2)
+
+    def symmetric_division_lordeg_index(self):
+        """ Adriatic index: symmetric division lordeg index"""
+        return self.adriatic_index(0, 1, 8, 0.5)
+
+    def symmetric_division_lodeg_index(self):
+        """ Adriatic index: symmetric division lodeg index"""
+        return self.adriatic_index(0, 1, 8, 1)
+
+    def symmetric_division_losdeg_index(self):
+        """ Adriatic index: symmetric division losdeg index"""
+        return self.adriatic_index(0, 1, 8, 2)
+
+    def randic_type_indeg_index(self):
+        """ Adriatic index: Randic type indeg index"""
+        return self.adriatic_index(0, 2, 1, -1)
+
+    def randic_type_irdeg_index(self):
+        """ Adriatic index: Randic type irdeg index"""
+        return self.adriatic_index(0, 2, 1, -0.5)
+
+    def randic_type_rodeg_index(self):
+        """ Adriatic index: Randic type rodeg index"""
+        return self.adriatic_index(0, 2, 1, 0.5)
+
+    def randic_type_deg_index(self):
+        """ Adriatic index: Randic type deg index"""
+        return self.adriatic_index(0, 2, 1, 1)
+
+    def randic_type_sdeg_index(self):
+        """ Adriatic index: Randic type sdeg index"""
+        return self.adriatic_index(0, 2, 1, 2)
+
+    def sum_indeg_index(self):
+        """ Adriatic index: sum indeg index"""
+        return self.adriatic_index(0, 2, 2, -1)
+
+    def sum_irdeg_index(self):
+        """ Adriatic index: sum irdeg index"""
+        return self.adriatic_index(0, 2, 2, -0.5)
+
+    def sum_rodeg_index(self):
+        """ Adriatic index: sum rodeg index"""
+        return self.adriatic_index(0, 2, 2, 0.5)
+
+    def sum_deg_index(self):
+        """ Adriatic index: sum deg index"""
+        return self.adriatic_index(0, 2, 2, 1)
+
+    def sum_sdeg_index(self):
+        """ Adriatic index: sum sdeg index"""
+        return self.adriatic_index(0, 2, 2, 2)
+
+    def inverse_sum_indeg_index(self):
+        """ Adriatic index: inverse sum indeg index"""
+        return self.adriatic_index(0, 2, 3, -1)
+
+    def inverse_sum_irdeg_index(self):
+        """ Adriatic index: inverse sum irdeg index"""
+        return self.adriatic_index(0, 2, 3, -0.5)
+
+    def inverse_sum_rodeg_index(self):
+        """ Adriatic index: inverse sum rodeg index"""
+        return self.adriatic_index(0, 2, 3, 0.5)
+
+    def inverse_sum_deg_index(self):
+        """ Adriatic index: inverse sum deg index"""
+        return self.adriatic_index(0, 2, 3, 1)
+
+    def inverse_sum_sdeg_index(self):
+        """ Adriatic index: inverse sum sdeg index"""
+        return self.adriatic_index(0, 2, 3, 2)
+
+    def misbalance_indeg_index(self):
+        """ Adriatic index: misbalance indeg index"""
+        return self.adriatic_index(0, 2, 4, -1)
+
+    def misbalance_irdeg_index(self):
+        """ Adriatic index: misbalance irdeg index"""
+        return self.adriatic_index(0, 2, 4, -0.5)
+
+    def misbalance_rodeg_index(self):
+        """ Adriatic index: misbalance rodeg index"""
+        return self.adriatic_index(0, 2, 4, 0.5)
+
+    def misbalance_deg_index(self):
+        """ Adriatic index: misbalance deg index"""
+        return self.adriatic_index(0, 2, 4, 1)
+
+    def misbalance_sdeg_index(self):
+        """ Adriatic index: misbalance sdeg index"""
+        return self.adriatic_index(0, 2, 4, 2)
+
+    def inverse_misbalance_indeg_index(self):
+        """ Adriatic index: inverse misbalance indeg index"""
+        return self.adriatic_index(0, 2, 5, -1)
+
+    def inverse_misbalance_irdeg_index(self):
+        """ Adriatic index: inverse misbalance irdeg index"""
+        return self.adriatic_index(0, 2, 5, -0.5)
+
+    def inverse_misbalance_rodeg_index(self):
+        """ Adriatic index: inverse misbalance rodeg index"""
+        return self.adriatic_index(0, 2, 5, 0.5)
+
+    def inverse_misbalance_deg_index(self):
+        """ Adriatic index: inverse misbalance deg index"""
+        return self.adriatic_index(0, 2, 5, 1)
+
+    def inverse_misbalance_sdeg_index(self):
+        """ Adriatic index: inverse misbalance sdeg index"""
+        return self.adriatic_index(0, 2, 5, 2)
+
+    def min_max_rodeg_index(self):
+        """ Adriatic index: min-max rodeg index"""
+        return self.adriatic_index(0, 2, 6, 0.5)
+
+    def min_max_deg_index(self):
+        """ Adriatic index: min-max deg index"""
+        return self.adriatic_index(0, 2, 6, 1)
+
+    def min_max_sdeg_index(self):
+        """ Adriatic index: min-max sdeg index"""
+        return self.adriatic_index(0, 2, 6, 2)
+
+    def max_min_rodeg_index(self):
+        """ Adriatic index: max-min rodeg index"""
+        return self.adriatic_index(0, 2, 7, 0.5)
+
+    def max_min_deg_index(self):
+        """ Adriatic index: max-min deg index"""
+        return self.adriatic_index(0, 2, 7, 1)
+
+    def max_min_sdeg_index(self):
+        """ Adriatic index: max-min sdeg index"""
+        return self.adriatic_index(0, 2, 7, 2)
+
+    def symmetric_division_rodeg_index(self):
+        """ Adriatic index: symmetric division rodeg index"""
+        return self.adriatic_index(0, 2, 8, 0.5)
+
+    def symmetric_division_deg_index(self):
+        """ Adriatic index: symmetric division deg index"""
+        return self.adriatic_index(0, 2, 8, 1)
+
+    def symmetric_division_sdeg_index(self):
+        """ Adriatic index: symmetric division sdeg index"""
+        return self.adriatic_index(0, 2, 8, 2)
+
+    def randic_type_hadeg_index(self):
+        """ Adriatic index: Randic type hadeg index"""
+        return self.adriatic_index(0, 3, 1, 0.5)
+
+    def randic_type_twodeg_index(self):
+        """ Adriatic index: Randic type twodeg index"""
+        return self.adriatic_index(0, 3, 1, 2)
+
+    def sum_hadeg_index(self):
+        """ Adriatic index: sum hadeg index"""
+        return self.adriatic_index(0, 3, 2, 0.5)
+
+    def sum_twodeg_index(self):
+        """ Adriatic index: sum twodeg index"""
+        return self.adriatic_index(0, 3, 2, 2)
+
+    def inverse_sum_hadeg_index(self):
+        """ Adriatic index: inverse sum hadeg index"""
+        return self.adriatic_index(0, 3, 3, 0.5)
+
+    def inverse_sum_twodeg_index(self):
+        """ Adriatic index: inverse sum twodeg index"""
+        return self.adriatic_index(0, 3, 3, 2)
+
+    def misbalance_hadeg_index(self):
+        """ Adriatic index: misbalance hadeg index"""
+        return self.adriatic_index(0, 3, 4, 0.5)
+
+    def misbalance_twodeg_index(self):
+        """ Adriatic index: misbalance twodeg index"""
+        return self.adriatic_index(0, 3, 4, 2)
+
+    def inverse_misbalance_hadeg_index(self):
+        """ Adriatic index: inverse misbalance hadeg index"""
+        return self.adriatic_index(0, 3, 5, 0.5)
+
+    def inverse_misbalance_twodeg_index(self):
+        """ Adriatic index: inverse misbalance twodeg index"""
+        return self.adriatic_index(0, 3, 5, 2)
+
+    def min_max_hadeg_index(self):
+        """ Adriatic index: min-max hadeg index"""
+        return self.adriatic_index(0, 3, 6, 0.5)
+
+    def min_max_twodeg_index(self):
+        """ Adriatic index: min-max twodeg index"""
+        return self.adriatic_index(0, 3, 6, 2)
+
+    def max_min_hadeg_index(self):
+        """ Adriatic index: max-min hadeg index"""
+        return self.adriatic_index(0, 3, 7, 0.5)
+
+    def max_min_twodeg_index(self):
+        """ Adriatic index: max-min twodeg index"""
+        return self.adriatic_index(0, 3, 7, 2)
+
+    def symmetric_division_hadeg_index(self):
+        """ Adriatic index: symmetric division hadeg index"""
+        return self.adriatic_index(0, 3, 8, 0.5)
+
+    def symmetric_division_twodeg_index(self):
+        """ Adriatic index: symmetric division twodeg index"""
+        return self.adriatic_index(0, 3, 8, 2)
+
+    def randic_type_lordi_index(self):
+        """ Adriatic index: Randic type lordi index"""
+        return self.adriatic_index(1, 1, 1, 0.5)
+
+    def randic_type_lodi_index(self):
+        """ Adriatic index: Randic type lodi index"""
+        return self.adriatic_index(1, 1, 1, 1)
+
+    def randic_type_losdi_index(self):
+        """ Adriatic index: Randic type losdi index"""
+        return self.adriatic_index(1, 1, 1, 2)
+
+    def sum_lordi_index(self):
+        """ Adriatic index: sum lordi index"""
+        return self.adriatic_index(1, 1, 2, 0.5)
+
+    def sum_lodi_index(self):
+        """ Adriatic index: sum lodi index"""
+        return self.adriatic_index(1, 1, 2, 1)
+
+    def sum_losdi_index(self):
+        """ Adriatic index: sum losdi index"""
+        return self.adriatic_index(1, 1, 2, 2)
+
+    def inverse_sum_lordi_index(self):
+        """ Adriatic index: inverse sum lordi index"""
+        return self.adriatic_index(1, 1, 3, 0.5)
+
+    def inverse_sum_lodi_index(self):
+        """ Adriatic index: inverse sum lodi index"""
+        return self.adriatic_index(1, 1, 3, 1)
+
+    def inverse_sum_losdi_index(self):
+        """ Adriatic index: inverse sum losdi index"""
+        return self.adriatic_index(1, 1, 3, 2)
+
+    def misbalance_lordi_index(self):
+        """ Adriatic index: misbalance lordi index"""
+        return self.adriatic_index(1, 1, 4, 0.5)
+
+    def misbalance_lodi_index(self):
+        """ Adriatic index: misbalance lodi index"""
+        return self.adriatic_index(1, 1, 4, 1)
+
+    def misbalance_losdi_index(self):
+        """ Adriatic index: misbalance losdi index"""
+        return self.adriatic_index(1, 1, 4, 2)
+
+    def inverse_misbalance_lordi_index(self):
+        """ Adriatic index: inverse misbalance lordi index"""
+        return self.adriatic_index(1, 1, 5, 0.5)
+
+    def inverse_misbalance_lodi_index(self):
+        """ Adriatic index: inverse misbalance lodi index"""
+        return self.adriatic_index(1, 1, 5, 1)
+
+    def inverse_misbalance_losdi_index(self):
+        """ Adriatic index: inverse misbalance losdi index"""
+        return self.adriatic_index(1, 1, 5, 2)
+
+    def min_max_lordi_index(self):
+        """ Adriatic index: min-max lordi index"""
+        return self.adriatic_index(1, 1, 6, 0.5)
+
+    def min_max_lodi_index(self):
+        """ Adriatic index: min-max lodi index"""
+        return self.adriatic_index(1, 1, 6, 1)
+
+    def min_max_losdi_index(self):
+        """ Adriatic index: min-max losdi index"""
+        return self.adriatic_index(1, 1, 6, 2)
+
+    def max_min_lordi_index(self):
+        """ Adriatic index: max-min lordi index"""
+        return self.adriatic_index(1, 1, 7, 0.5)
+
+    def max_min_lodi_index(self):
+        """ Adriatic index: max-min lodi index"""
+        return self.adriatic_index(1, 1, 7, 1)
+
+    def max_min_losdi_index(self):
+        """ Adriatic index: max-min losdi index"""
+        return self.adriatic_index(1, 1, 7, 2)
+
+    def symmetric_division_lordi_index(self):
+        """ Adriatic index: symmetric division lordi index"""
+        return self.adriatic_index(1, 1, 8, 0.5)
+
+    def symmetric_division_lodi_index(self):
+        """ Adriatic index: symmetric division lodi index"""
+        return self.adriatic_index(1, 1, 8, 1)
+
+    def symmetric_division_losdi_index(self):
+        """ Adriatic index: symmetric division losdi index"""
+        return self.adriatic_index(1, 1, 8, 2)
+
+    def randic_type_indi_index(self):
+        """ Adriatic index: Randic type indi index"""
+        return self.adriatic_index(1, 2, 1, -1)
+
+    def randic_type_irdi_index(self):
+        """ Adriatic index: Randic type irdi index"""
+        return self.adriatic_index(1, 2, 1, -0.5)
+
+    def randic_type_rodi_index(self):
+        """ Adriatic index: Randic type rodi index"""
+        return self.adriatic_index(1, 2, 1, 0.5)
+
+    def randic_type_di_index(self):
+        """ Adriatic index: Randic type di index"""
+        return self.adriatic_index(1, 2, 1, 1)
+
+    def randic_type_sdi_index(self):
+        """ Adriatic index: Randic type sdi index"""
+        return self.adriatic_index(1, 2, 1, 2)
+
+    def sum_indi_index(self):
+        """ Adriatic index: sum indi index"""
+        return self.adriatic_index(1, 2, 2, -1)
+
+    def sum_irdi_index(self):
+        """ Adriatic index: sum irdi index"""
+        return self.adriatic_index(1, 2, 2, -0.5)
+
+    def sum_rodi_index(self):
+        """ Adriatic index: sum rodi index"""
+        return self.adriatic_index(1, 2, 2, 0.5)
+
+    def sum_di_index(self):
+        """ Adriatic index: sum di index"""
+        return self.adriatic_index(1, 2, 2, 1)
+
+    def sum_sdi_index(self):
+        """ Adriatic index: sum sdi index"""
+        return self.adriatic_index(1, 2, 2, 2)
+
+    def inverse_sum_indi_index(self):
+        """ Adriatic index: inverse sum indi index"""
+        return self.adriatic_index(1, 2, 3, -1)
+
+    def inverse_sum_irdi_index(self):
+        """ Adriatic index: inverse sum irdi index"""
+        return self.adriatic_index(1, 2, 3, -0.5)
+
+    def inverse_sum_rodi_index(self):
+        """ Adriatic index: inverse sum rodi index"""
+        return self.adriatic_index(1, 2, 3, 0.5)
+
+    def inverse_sum_di_index(self):
+        """ Adriatic index: inverse sum di index"""
+        return self.adriatic_index(1, 2, 3, 1)
+
+    def inverse_sum_sdi_index(self):
+        """ Adriatic index: inverse sum sdi index"""
+        return self.adriatic_index(1, 2, 3, 2)
+
+    def misbalance_indi_index(self):
+        """ Adriatic index: misbalance indi index"""
+        return self.adriatic_index(1, 2, 4, -1)
+
+    def misbalance_irdi_index(self):
+        """ Adriatic index: misbalance irdi index"""
+        return self.adriatic_index(1, 2, 4, -0.5)
+
+    def misbalance_rodi_index(self):
+        """ Adriatic index: misbalance rodi index"""
+        return self.adriatic_index(1, 2, 4, 0.5)
+
+    def misbalance_di_index(self):
+        """ Adriatic index: misbalance di index"""
+        return self.adriatic_index(1, 2, 4, 1)
+
+    def misbalance_sdi_index(self):
+        """ Adriatic index: misbalance sdi index"""
+        return self.adriatic_index(1, 2, 4, 2)
+
+    def inverse_misbalance_indi_index(self):
+        """ Adriatic index: inverse misbalance indi index"""
+        return self.adriatic_index(1, 2, 5, -1)
+
+    def inverse_misbalance_irdi_index(self):
+        """ Adriatic index: inverse misbalance irdi index"""
+        return self.adriatic_index(1, 2, 5, -0.5)
+
+    def inverse_misbalance_rodi_index(self):
+        """ Adriatic index: inverse misbalance rodi index"""
+        return self.adriatic_index(1, 2, 5, 0.5)
+
+    def inverse_misbalance_di_index(self):
+        """ Adriatic index: inverse misbalance di index"""
+        return self.adriatic_index(1, 2, 5, 1)
+
+    def inverse_misbalance_sdi_index(self):
+        """ Adriatic index: inverse misbalance sdi index"""
+        return self.adriatic_index(1, 2, 5, 2)
+
+    def min_max_rodi_index(self):
+        """ Adriatic index: min-max rodi index"""
+        return self.adriatic_index(1, 2, 6, 0.5)
+
+    def min_max_di_index(self):
+        """ Adriatic index: min-max di index"""
+        return self.adriatic_index(1, 2, 6, 1)
+
+    def min_max_sdi_index(self):
+        """ Adriatic index: min-max sdi index"""
+        return self.adriatic_index(1, 2, 6, 2)
+
+    def max_min_rodi_index(self):
+        """ Adriatic index: max-min rodi index"""
+        return self.adriatic_index(1, 2, 7, 0.5)
+
+    def max_min_di_index(self):
+        """ Adriatic index: max-min di index"""
+        return self.adriatic_index(1, 2, 7, 1)
+
+    def max_min_sdi_index(self):
+        """ Adriatic index: max-min sdi index"""
+        return self.adriatic_index(1, 2, 7, 2)
+
+    def symmetric_division_rodi_index(self):
+        """ Adriatic index: symmetric division rodi index"""
+        return self.adriatic_index(1, 2, 8, 0.5)
+
+    def symmetric_division_di_index(self):
+        """ Adriatic index: symmetric division di index"""
+        return self.adriatic_index(1, 2, 8, 1)
+
+    def symmetric_division_sdi_index(self):
+        """ Adriatic index: symmetric division sdi index"""
+        return self.adriatic_index(1, 2, 8, 2)
+
+    def randic_type_hadi_index(self):
+        """ Adriatic index: Randic type hadi index"""
+        return self.adriatic_index(1, 3, 1, 0.5)
+
+    def randic_type_twodi_index(self):
+        """ Adriatic index: Randic type twodi index"""
+        return self.adriatic_index(1, 3, 1, 2)
+
+    def sum_hadi_index(self):
+        """ Adriatic index: sum hadi index"""
+        return self.adriatic_index(1, 3, 2, 0.5)
+
+    def sum_twodi_index(self):
+        """ Adriatic index: sum twodi index"""
+        return self.adriatic_index(1, 3, 2, 2)
+
+    def inverse_sum_hadi_index(self):
+        """ Adriatic index: inverse sum hadi index"""
+        return self.adriatic_index(1, 3, 3, 0.5)
+
+    def inverse_sum_twodi_index(self):
+        """ Adriatic index: inverse sum twodi index"""
+        return self.adriatic_index(1, 3, 3, 2)
+
+    def misbalance_hadi_index(self):
+        """ Adriatic index: misbalance hadi index"""
+        return self.adriatic_index(1, 3, 4, 0.5)
+
+    def misbalance_twodi_index(self):
+        """ Adriatic index: misbalance twodi index"""
+        return self.adriatic_index(1, 3, 4, 2)
+
+    def inverse_misbalance_hadi_index(self):
+        """ Adriatic index: inverse misbalance hadi index"""
+        return self.adriatic_index(1, 3, 5, 0.5)
+
+    def inverse_misbalance_twodi_index(self):
+        """ Adriatic index: inverse misbalance twodi index"""
+        return self.adriatic_index(1, 3, 5, 2)
+
+    def min_max_hadi_index(self):
+        """ Adriatic index: min-max hadi index"""
+        return self.adriatic_index(1, 3, 6, 0.5)
+
+    def min_max_twodi_index(self):
+        """ Adriatic index: min-max twodi index"""
+        return self.adriatic_index(1, 3, 6, 2)
+
+    def max_min_hadi_index(self):
+        """ Adriatic index: max-min hadi index"""
+        return self.adriatic_index(1, 3, 7, 0.5)
+
+    def max_min_twodi_index(self):
+        """ Adriatic index: max-min twodi index"""
+        return self.adriatic_index(1, 3, 7, 2)
+
+    def symmetric_division_hadi_index(self):
+        """ Adriatic index: symmetric division hadi index"""
+        return self.adriatic_index(1, 3, 8, 0.5)
+
+    def symmetric_division_twodi_index(self):
+        """ Adriatic index: symmetric division twodi index"""
+        return self.adriatic_index(1, 3, 8, 2)
+
+    
