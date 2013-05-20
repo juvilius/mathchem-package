@@ -54,7 +54,7 @@ sage: scatter_plot(zip(m1,m2), markersize=1).show(figsize=[8,4], dpi=300)
 
 
 import mathchem as mc
-mols = mc.read_from_NCI_by_NSC('1-5000')
+mols = mc.read_from_NCI_by_NSC('1-500')
 mols_c = filter(lambda m: m.is_connected(), mols)
 
 print 'Test set of ', len(mols_c), 'compounds'
@@ -68,15 +68,5 @@ methods = ['order','diameter', 'energy', 'incidence_energy', 'zagreb_m1_index', 
 
 
 
-import scipy.stats as stats
-@interact
-def index_correlations(index_A = selector(methods,label="Index A"), index_B = selector(methods,label="Index B")):
-    data_A = [getattr(m, index_A)() for m in mols_c]
-    data_B = [getattr(m, index_B)() for m in mols_c]
-    data = zip(data_A, data_B)
-    slope, intercept, r, ttprob, stderr = stats.linregress(data)
-    
-    print 'Correlation coefficient: ', r
-    canvas = scatter_plot(data) + plot(slope*x+intercept,min(data_A),max(data_A))
-    canvas.show(figsize=[10,4], axes_labels=[index_A, index_B])
+
 
