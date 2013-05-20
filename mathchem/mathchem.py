@@ -408,7 +408,7 @@ class Mol ():
     #
     
     def spectrum(self, matrix="adjacency"):
-        r""" Calculates spectrum of the graph
+        r""" Spectrum of the graph
     
         args:
             matrix (str or matrix)
@@ -423,11 +423,12 @@ class Mol ():
                 arbitrary matrix
                 
         """
-        if self.__Order == 0: return []
         
         from numpy import linalg as la
         
         if type(matrix) is str:
+        
+            if self.__Order == 0: return []
 
             if matrix == "adjacency" or matrix == "A":
                 if self.__Spectrum == []:
@@ -479,13 +480,18 @@ class Mol ():
                 return s
             else:
                 return False 
-        # if the parameter is an arbitrary matrix
+                
+        # if the parameter is an arbitrary matrix            
+        # DEPRECATED:
+        # use mathchem.spectrum(matrix) for arbitrary matrices
+        # 
         else:
             s = la.eigvalsh(matrix).tolist()
             s.sort(reverse=True)
             return s
     
-    
+    # for arbitrary matrices use:
+    # mathchem.spectral_moment(matrix)
     def spectral_moment(self, k, matrix="adjacency"):
         """ Return k-th spectral moment
         
@@ -493,12 +499,15 @@ class Mol ():
         """
         return np.power(self.spectrum(matrix),k).tolist()
         
+    # for arbitrary matrices use:
+    # mathchem.spectral_radius(matrix)        
     def spectral_radius(self, matrix="adjacency"):
         s = self.spectrum(matrix)
         return max(abs(s[0]), abs(s[len(s)-1]))
         
     
-        
+    # for arbitrary matrices use:
+    # mathchem.energy(matrix)    
     def energy(self, matrix="adjacency"):
         """ Return energy of the graph 
         
@@ -523,12 +532,12 @@ class Mol ():
     #
     
     def zagreb_m1_index(self):
-        """ Calculates Zagreb M1 Index """    
+        """ Zagreb M1 Index """    
         return sum(map(lambda d: d**2, self.degrees()))
         
     
     def zagreb_m2_index(self):
-        """ Calculates Zagreb M2 Index 
+        """ Zagreb M2 Index 
         
         The molecular graph must contain at least one edge, otherwise the function Return False
         Zagreb M2 Index is a special case of Connectivity Index with power = 1"""
@@ -536,7 +545,7 @@ class Mol ():
 
     
     def connectivity_index(self, power):
-        """ Calculates Connectivity index (R)"""
+        """ Connectivity index (R)"""
         E = self.edges() # E - all edges
         if len(E) == 0: return 0
         return np.float64(np.sum( map(lambda (e1 ,e2): ( self.degrees()[e1]*self.degrees()[e2] ) ** power , E) , dtype=np.float128))
@@ -544,19 +553,19 @@ class Mol ():
     augmented_zagreb_index = connectivity_index
 
     def sum_connectivity_index(self):
-        """ Calculates Sum-Connectivity index"""
+        """ Sum-Connectivity index"""
         E = self.edges() # E - all edges
         if len(E) == 0: return 0
         return np.float64(np.sum( map(lambda (e1 ,e2): ( self.degrees()[e1]+self.degrees()[e2] ) ** (-0.5) , E) , dtype=np.float128)) 
         
     def geometric_arithmetic_index(self):
-        """ Calculates Geometric-Arithmetic index"""
+        """ Geometric-Arithmetic index"""
         E = self.edges() # E - all edges
         if len(E) == 0: return 0
         return np.float64(np.sum( map(lambda (e1 ,e2): 2.0*np.sqrt(self.degrees()[e1]*self.degrees()[e2] ) / (self.degrees()[e1]+self.degrees()[e2])  , E) , dtype=np.float128)) 
            
     def eccentric_connectivity_index(self):
-        """ Calculates Eccentric Connectivity Index 
+        """ Eccentric Connectivity Index 
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
@@ -565,7 +574,7 @@ class Mol ():
         
     
     def randic_index(self):
-        """ Calculates Randic Index 
+        """ Randic Index 
         
         The molecular graph must contain at least one edge, otherwise the function Return False
         Randic Index is a special case of Connectivity Index with power = -1/2"""
@@ -573,7 +582,7 @@ class Mol ():
                         
     ### refactor it!
     def atom_bond_connectivity_index(self):
-        """ Calculates Atom-Bond Connectivity Index (ABC) """
+        """ Atom-Bond Connectivity Index (ABC) """
         s = np.float128(0) # summator
         for (u,v) in self.edges():
             d1 = np.float64(self.degrees()[u])
@@ -583,7 +592,7 @@ class Mol ():
     
     
     def estrada_index(self, matrix = "adjacency"):
-        """ Calculates Estrada Index (EE)  
+        """ Estrada Index (EE)  
         
         args:
             matrix -- see spectrum for help, default value is 'adjacency'
@@ -594,7 +603,7 @@ class Mol ():
         
         
     def distance_estrada_index(self):
-        """ Calculates Distance Estrada Index (DEE) 
+        """ Distance Estrada Index (DEE) 
         
         Special case of Estrada index with distance matrix
         """
@@ -603,7 +612,7 @@ class Mol ():
     
     
     def degree_distance(self):
-        """ Calculates Degree Distance (DD)
+        """ Degree Distance (DD)
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
@@ -612,7 +621,7 @@ class Mol ():
         return dd[0,0]
         
     def reverse_degree_distance(self):
-        """ Calculates Reverse Distance Degree (rDD)
+        """ Reverse Distance Degree (rDD)
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
@@ -621,7 +630,7 @@ class Mol ():
     
     
     def molecular_topological_index(self):
-        """ Calculates (Schultz) Molecular Topological Index (MTI)
+        """ (Schultz) Molecular Topological Index (MTI)
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
@@ -634,7 +643,7 @@ class Mol ():
     
         
     def eccentric_distance_sum(self):
-        """ Calculates Distance Sum
+        """ Distance Sum
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
@@ -644,7 +653,7 @@ class Mol ():
     
     # strange - it is slow ((
     def balaban_j_index(self):
-        """ Calculates Balaban J index 
+        """ Balaban J index 
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
@@ -655,7 +664,7 @@ class Mol ():
         return np.float64(k * np.sum( map(lambda (u ,v): 1 / np.sqrt((ds[u][0,0]*ds[v][0,0])), self.edges() ), dtype=np.float128))
         
     def sum_balaban_index(self):
-        """ Calculates Sum Balaban index 
+        """ Sum Balaban index 
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
@@ -667,7 +676,7 @@ class Mol ():
     
         
     def kirchhoff_index(self):
-        """ Calculates Kirchhoff Index (Kf)
+        """ Kirchhoff Index (Kf)
         
         Kf = 1/2 * sum_i sum_j RD[i,j]
         Based on resistance distance matrix RD
@@ -683,7 +692,7 @@ class Mol ():
     resistance = kirchhoff_index
     
     def wiener_index(self):
-        """ Calculates Wiener Index (W)
+        """ Wiener Index (W)
         
         W = 1/2 * sum_i sum_j D[i,j]
         where D is distance matrix
@@ -708,7 +717,7 @@ class Mol ():
         return s
 
     def reverse_wiener_index(self):
-        """ Calculates Reverse Wiener Index (RW)
+        """ Reverse Wiener Index (RW)
         
         RW = 1/2 * sum_i!=j ( d - D[i,j] )
         where D is distance matrix and d is diameter
@@ -721,7 +730,7 @@ class Mol ():
         return  self.diameter() * (self.__Order * (self.__Order - 1)) / 2 - self.wiener_index()
         
     def hyper_wiener_index(self):
-        """ Calculates Hyper-Wiener Index (WW)
+        """ Hyper-Wiener Index (WW)
         
         WW = 1/2 * ( sum_ij d(i,j)^2 + sum_i_j d(i,j) )
         where D is distance matrix
@@ -734,7 +743,7 @@ class Mol ():
         
         
     def harary_index(self):
-        """ Calculates Harary Index (H)
+        """ Harary Index (H)
         
         H = sum_i sum_j Rd[i,j]
         where Rd is reciprocal distance matrix 
@@ -752,7 +761,7 @@ class Mol ():
         return np.float64(np.sum( map( lambda x: np.sqrt(x) ,self.spectrum('laplacian')), dtype=np.float128))
 
     def multiplicative_sum_zagreb_index(self):
-        """ Calculates Log( Multiplicative Sum Zagreb index )""" 
+        """ Log( Multiplicative Sum Zagreb index )""" 
         d = self.degrees()
         return np.float64(np.sum( map( lambda (u,v): np.log(np.float64(d[u]+d[v])), self.edges()) , dtype=np.float128))
         
@@ -770,7 +779,9 @@ class Mol ():
     # Adriatic indices
 
     
-
+    # DEPRECATED
+    # use mathchem.all_adriatic()
+    
     def all_adriatic(self):
         """ Generate all possible parameters sets for adriatic indices"""
         r = []

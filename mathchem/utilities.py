@@ -33,13 +33,15 @@ def batch_process(infile, file_format, outfile, function, hydrogens=False) :
         if m != False:
             f_out.write(str(function(m))+"\n")
         
-    
     f_in.close()
     f_out.close()
+    
+    return
+    
 
-
-
-# functions which read all the file and return list of Mol instances
+#
+#    Functions that read all the file and return list of Mol instances
+#
 
 def read_from_sdf(fname, hydrogens = False):
     """
@@ -57,6 +59,8 @@ def read_from_sdf(fname, hydrogens = False):
     f_in.close()
     return mols
 
+
+
 def read_from_mol(fname, hydrogens = False):
     """
     Read the whole .mol file and return Mol instance
@@ -68,6 +72,8 @@ def read_from_mol(fname, hydrogens = False):
     
     f_in.close()
     return m
+
+
 
 def read_from_mol2(fname, hydrogens = False):
     """
@@ -84,6 +90,8 @@ def read_from_mol2(fname, hydrogens = False):
     
     f_in.close()
     return mols
+ 
+ 
     
 def read_from_g6(fname):
     """
@@ -99,29 +107,141 @@ def read_from_g6(fname):
     f_in.close()
     return mols   
 
+#
+#    NCI functions
+#
+
+
+def read_from_NCI_by_NSC(num, hydrogens = False):
+
+    url = 'http://cactus.nci.nih.gov/ncidb2.2/nci2.2.tcl?op1=nsc&data1='+num+'&output=sdf&nomsg=1&maxhits=1000000'
+    
+    return _read_from_NCI(url, hydrogens)
+
 
 def read_from_NCI_by_name(name, hydrogens = False, fields = []):
-    import urllib
+
     fields_string = ''
     for f in fields: fields_string = fields_string + '&fields=' + urllib.quote_plus(f)
     
-    url = 'http://cactus.nci.nih.gov/cgi-bin/nci2.1.tcl?op1=name&data1='+name+'&method1=substring&output=sdf&nomsg=1&maxhits=1000000'+ fields_string
-    f = urllib.urlretrieve(url)
-    return read_from_sdf(f[0], hydrogens)
+    url = 'http://cactus.nci.nih.gov/ncidb2.2/nci2.2.tcl?op1=name&data1='+name+'&method1=substring&output=sdf&nomsg=1&maxhits=1000000'+ fields_string
 
-def read_from_NCI_by_NSC(num, hydrogens = False):
-    import urllib
-    url = 'http://cactus.nci.nih.gov/cgi-bin/nci2.1.tcl?op1=nsc&data1='+num+'&output=sdf&nomsg=1&maxhits=1000000'
-    f = urllib.urlretrieve(url)
-    return read_from_sdf(f[0], hydrogens)
+    return _read_from_NCI(url, hydrogens)
+
 
 def read_from_NCI_by_CAS(num, hydrogens = False):
-    import urllib
-    url = 'http://cactus.nci.nih.gov/cgi-bin/nci2.1.tcl?op1=cas&data1='+num+'&output=sdf&nomsg=1&maxhits=1000000'
-    f = urllib.urlretrieve(url)
-    return read_from_sdf(f[0], hydrogens)
+
+    url = 'http://cactus.nci.nih.gov/ncidb2.2/nci2.2.tcl?op1=cas&data1='+num+'&output=sdf&nomsg=1&maxhits=1000000'
+
+    return _read_from_NCI(url, hydrogens)
 
     
+
+# helpers
+
+def spectrum(matrix):
+    r""" Calculates spectrum of the matrix"""
+    from numpy import linalg as la
+    s = la.eigvalsh(matrix).tolist()
+    s.sort(reverse=True)
+    return s
+
+
+def all_adriatic():
+    """ Generate all possible parameters sets for adriatic indices"""
+    r = []
+    for p in [0,1]:
+        for i in [1,2,3]:
+            for j in range(1,9):
+                if i == 3:
+                    for a in [0.5, 2]:
+                        r.append((p,i,j,a))
+                elif i == 2 and j in range(1,6):
+                    for a in [-1, -0.5, 0.5, 1, 2]:
+                        r.append((p,i,j,a))
+                elif i == 2 or i == 1:
+                    for a in [0.5, 1, 2]:
+                        r.append((p,i,j,a))
+    return r    
+    
+def adriatic_name(p,i,j,a):
+    """ Return the name for given parameters of Adriatic indices"""
+    #(j)
+    name1 = {1:'Randic type ',\
+             2:'sum ',\
+             3:'inverse sum ', \
+             4:'misbalance ', \
+             5:'inverse misbalance ', \
+             6:'min-max ', \
+             7:'max-min ', \
+             8:'symmetric division '}
+    # (i,a)         
+    name2 = {(1, 0.5):'lor',\
+             (1,1):'lo', \
+             (1,2):'los', \
+             (2,-1):'in', \
+             (2, -0.5):'ir', \
+             (2, 0.5):'ro', \
+             (2,1):'', \
+             (2,2):'s', \
+             (3, 0.5):'ha', \
+             (3,2):'two'}
+    #(p)         
+    name3 = {0:'deg', 1:'di'}
+    
+    return(name1[j]+name2[(i,a)]+name3[p])
+    
+def spectral_moment( k, matrix):
+    """ Return k-th spectral moment of a matrix
+    
+    parameters: matrix
+    """
+    return np.power(spectrum(matrix),k).tolist()
+        
+def spectral_radius(matrix):
+    s = spectrum(matrix)
+    return max(abs(s[0]), abs(s[len(s)-1]))
+    
+
+    
+def energy(matrix):
+    """ Return energy of a matrix 
+    
+    parameters: matrix
+    """
+    return np.float64(np.sum( map( lambda x: abs(x) , spectrum(matrix)), dtype=np.float128))
+    
+    
+###
+###
+###   Private functions
+###
+###
+    
+# make a request to the NCI and retreive data in form of SDF-file
+def _read_from_NCI(url, hydrogens = False):
+    import urllib2, tempfile
+    
+    resp = urllib2.urlopen(url)
+    
+    if resp.code != 200:
+        print 'Server returned error code ', resp.code
+        return False
+    
+    f = tempfile.TemporaryFile()
+    f.write(resp.read())
+    f.seek(0)
+    mols = []
+    while True:
+        m = _read_sdf_molecule(f, hydrogens)
+        if m == False: break
+        mols.append(m)
+    f.close()
+        
+    return mols
+
+
+
 # functions which parse a fragment of file and initialize Mol instance
 
 # read a single molecule from file
@@ -263,4 +383,3 @@ def _read_mol2_molecule(file, hydrogens = False):
     
     return m
 
-    

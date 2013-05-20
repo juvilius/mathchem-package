@@ -1,10 +1,6 @@
-##README
-This readme file is for 0.1.1 version.
-Will be updated for current 0.1.7 version.
-
 ##What is Mathchem?
 
-Mathchem is a free open source Python package for calculating topological indices and other invariants of molecular graphs. Currently it has version 0.1.1. This means that the package is on a very early stage of development. It was not fully tested and any feedback is welcome.
+Mathchem is a free open source Python package for calculating topological indices and other invariants of molecular graphs. Currently it has version 0.2.1. This means that the package is on a very early stage of development. It was not fully tested and any feedback is welcome.
 
 The sources are hosted by Github: <https://github.com/hamster3d/mathchem-package>
 
@@ -44,7 +40,6 @@ The second module **utilites** contains some useful functions. Currently there i
         
 ~~~~~~~~~~~~~~~~~~ {.python .numberLines}
     import mathchem as mc
-    import mathchem.utilites as u
     
     def calculate_laplacian_energy(s):
         m = mc.Mol(s)
@@ -59,6 +54,7 @@ After executing this code we can find calculated laplacian energy for all graphs
 ##Functionality
 ###Calculates matrices:
 * Adjacency
+* Incidence
 * Laplacian
 * Signless Laplacian
 * Normalized Laplacian
@@ -127,6 +123,7 @@ After executing this code we can find calculated laplacian energy for all graphs
 * Degree
 * Eccentricity
 * Connectedness
+* Distances from one vertex others
 
 ~~~~~~~~~~~~~~~~~~ {.python .numberLines}
         >>> import mathchem as mc
@@ -147,14 +144,14 @@ numpy
 
 ###As Sage module
 
-Download **spkg** file from <https://github.com/downloads/hamster3d/mathchem-package/mathchem-0.1.0.spkg>
+Download **spkg** file from <https://github.com/downloads/hamster3d/mathchem-package/mathchem-0.2.1.spkg>
 
 Save it into your **sage** directory
 
 Run sage with command to install a new package:
 
 
-    sage -f mathchem-0.1.0.spkg
+    sage -f mathchem-0.2.1.spkg
 
 
 After that you can use **mathchem** in your sage programs:
