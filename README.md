@@ -77,11 +77,16 @@ After executing this code we can find calculated laplacian energy for all graphs
             [4, 3, 2, 1, 2, 3, 3, 0]])
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 
-    
-###Calculates topological indices:
+###Calculates graph spectral properties:    
+
 * Spectrum of the all matrices above
 * Spectral moments
+* Spectral radius
 * Energy
+* Incidence Energy
+
+###Calculates topological indices:
+
 * Zagreb M1 Index
 * Zagreb M2 Index
 * Connectivity index (R)
@@ -95,11 +100,19 @@ After executing this code we can find calculated laplacian energy for all graphs
 * (Schultz) Molecular Topological Index (MTI)
 * Distance Sum
 * Balaban J index
+* Sum-Balaban Index
 * Kirchhoff Index (Kf) or Resistance
 * Wiener Index (W)
+* Terminal Wiener Index (TW)
 * Reverse Wiener Index (RW)
 * Hyper-Wiener Index (WW)
 * Harary Index (H)
+* Sum-Connectivity Index
+* Geometric-Arithmetic Index
+* Multiplicative Sum Zagreb Index
+* Multiplicative P1 Zagreb Index
+* Multiplicative P2 Zagreb Index
+* 148 Discrete Adriatic Indices
 
 ~~~~~~~~~~~~~~~~~~ {.python .numberLines}
     >>> import mathchem as mc
@@ -124,6 +137,7 @@ After executing this code we can find calculated laplacian energy for all graphs
 * Eccentricity
 * Connectedness
 * Distances from one vertex others
+
 
 ~~~~~~~~~~~~~~~~~~ {.python .numberLines}
         >>> import mathchem as mc
