@@ -158,7 +158,7 @@ numpy
 
 ###As Sage module
 
-Download **spkg** file from <https://github.com/downloads/hamster3d/mathchem-package/mathchem-0.2.1.spkg>
+Download **spkg** file from <http://osebje.famnit.upr.si/~alexander.vasilyev/downloads/mathchem-0.2.1.spkg>
 
 Save it into your **sage** directory
 
