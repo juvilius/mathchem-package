@@ -95,7 +95,7 @@ def read_from_mol2(fname, hydrogens = False):
     
 def read_from_g6(fname):
     """
-    Read the whole .g6 file and return list of Mol instances
+    Read the whole .g6 file (graph6 fromat) and return list of Mol instances
     """
     
     f_in = open(fname, 'r')
@@ -106,6 +106,63 @@ def read_from_g6(fname):
 
     f_in.close()
     return mols   
+
+def read_from_s6(fname):
+    """
+    Read the whole .s6 file (sparse6 format) and return list of Mol instances
+    """
+    f_in = open(fname, 'r')
+    mols = []
+
+    for line in f_in:
+        mols.append(Mol(line))
+
+    f_in.close()
+    return mols  
+
+def read_from_planar_code(fname):
+    """
+    Read the whole file (planar code fromat) and return list of Mol instances
+    """
+    
+    f_in = open(fname, 'rb')
+    mols = []
+
+    # read header >>planar_code<<
+    f_in.read(15)
+    # TODO: check for correct header
+    
+    byte = f_in.read(1)
+    # read byte by byte
+
+    while byte != "":
+        n = ord(byte)
+        
+        m = Mol()
+        A = [[0 for col in range(n)] for row in range(n)]
+        E = [] # here we will collect edges
+        k = 1 # current vertex
+        while byte != "":    
+            byte = f_in.read(1)
+            b = ord(byte)
+            if b == 0: # go to the next vertex
+                k += 1
+                if k == n+1: # go to the next graph
+                    break
+            elif A[k-1][b-1] == 0: # if we don't have already added the edge
+                E.append((k-1,b-1))
+                A[k-1][b-1] = 1
+                A[b-1][k-1] = 1
+        
+        m._set_Order(n)
+        m._set_A(A)
+        m._set_Edges(E)
+        
+        mols.append(m)
+        byte = f_in.read(1)
+
+    f_in.close()
+    return mols 
 
 #
 #    NCI functions

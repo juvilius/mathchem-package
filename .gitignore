@@ -4,3 +4,5 @@ makeit.md
 *.esproj
 mathchem.egg-info
 dist/*
+
+tests/test.py

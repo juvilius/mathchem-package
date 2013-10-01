@@ -89,11 +89,20 @@ class Mol ():
         self.__Order = order
     
     # native method to initialize Mol class is to provide g6 string
-    def __init__(self, g6str=None, check_connectedness=True):
+    def __init__(self, string=None, check_connectedness=True):
         """ Molecular graph class """
         self.__Check_connectedness = check_connectedness
-        if g6str != None:
-            self.read_g6(g6str)
+        if string != None:
+            if string[0] == '>':
+                if string.startswith('>>graph6<<'):
+                    string = string[10:]
+                elif string.startswith('>>sparse6<<'):
+                    string = string[11:]
+                            
+            if string[0] == ':':
+                print self.read_s6(string)
+            else:
+                self.read_g6(string)
         
           
     def __repr__(self):
@@ -153,21 +162,26 @@ class Mol ():
             
     def read_g6(self, s):
         """ Initialize graph from graph6 string """
+        
         def graph_bit(pos,off):
             return ( (ord(s[off + 1+ pos/6]) - 63) & (2**(5-pos%6)) ) != 0
         
         # reset all the attributes before changing the structure    
         self._reset_()
-        
+              
+                
         n = ord(s[0]) - 63
         off = 0
         if n==63:
-            if not ord(s[1]) - 63 == 63:
-                n = sum(map(lambda i: (ord(s[i]) - 63) << (6*(3-i)),range(1,3)))
+            if ord(s[1]) - 63 != 63:
+                n = ((ord(s[1])-63)<<12) + ((ord(s[2])-63)<<6) + ord(s[3])-63
+                
                 off = 3
             else:
-                n = sum(map(lambda i: (ord(s[i]) - 63) << (6*(7-i)),range(2,7)))
+                n = ((ord(s[2])-63)<<30) + ((ord(s[3])-63)<<24) + ((ord(s[4])-63)<<18) + ((ord(s[5])-63)<<12) + ((ord(s[6])-63)<<6) + ord(s[7])-63
+                
                 off = 7
+                
         self.__Order = n     
     
         self.__A = [[0 for col in range(n)] for row in range(n)]
@@ -188,6 +202,85 @@ class Mol ():
                 
         self.__g6_string = s
     
+
+    def read_s6(self, s):
+        """ Initialize graph from sparse6 string """
+        def graph_bit(pos,off):
+            return ( (ord(s[off + 1+ pos/6]) - 63) & (2**(5-pos%6)) ) != 0
+        
+        # reset all the attributes before changing the structure    
+        self._reset_()
+        
+        if not s[0] == ':':
+            print 'This is not a sparse6 format!'
+            return False
+              
+        s = s[1:]
+        n = ord(s[0]) - 63
+        off = 0
+        if n==63:
+            if ord(s[1]) - 63 != 63:
+                n = ((ord(s[1])-63)<<12) + ((ord(s[2])-63)<<6) + ord(s[3])-63
+                
+                off = 3
+            else:
+                n = ((ord(s[2])-63)<<30) + ((ord(s[3])-63)<<24) + ((ord(s[4])-63)<<18) + ((ord(s[5])-63)<<12) + ((ord(s[6])-63)<<6) + ord(s[7])-63
+                
+                off = 7
+                
+        self.__Order = n     
+        
+        k = 1
+        while 1<<k < n:
+           k += 1
+       
+        data = s[off+1:]
+        
+        print n,k
+        print data
+        
+        def parseData():
+            """Return stream of pairs b[i], x[i] for sparse6 format."""
+            chunks = iter(data)
+            d = None # partial data word
+            dLen = 0 # how many unparsed bits are left in d
+        
+            while 1:
+                if dLen < 1:
+                    d = ord(next(chunks))-63
+                    dLen = 6
+                dLen -= 1
+                b = (d>>dLen) & 1 # grab top remaining bit
+    			
+                x = d & ((1<<dLen)-1) # partially built up value of x
+                xLen = dLen		# how many bits included so far in x
+                while xLen < k:	# now grab full chunks until we have enough
+                    d = ord(next(chunks)) - 63
+                    dLen = 6
+                    x = (x<<6) + d
+                    xLen += 6
+                x = (x >> (xLen - k)) # shift back the extra bits
+                dLen = xLen - k
+                yield b,x
+
+        self.__A = [[0 for col in range(n)] for row in range(n)]
+    
+        
+        self.__Edges = [];
+        
+        v = 0
+        
+        for b,x in parseData():
+            if b: v += 1
+            if x >= n: break # padding with ones can cause overlarge number here
+            elif x > v: v = x
+            else:
+                self.__A[x][v] = 1
+                self.__A[v][x] = 1
+                self.__Edges.append((x,v))
+        
+        self.__g6_string = ''
+
     
     def write_dot_file(self, filename):
     

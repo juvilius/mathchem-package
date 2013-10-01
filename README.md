@@ -1,6 +1,6 @@
 ##What is Mathchem?
 
-Mathchem is a free open source Python package for calculating topological indices and other invariants of molecular graphs. Currently it has version 0.2.1. This means that the package is on a very early stage of development. It was not fully tested and any feedback is welcome.
+Mathchem is a free open source Python package for calculating topological indices and other invariants of molecular graphs.
 
 The sources are hosted by Github: <https://github.com/hamster3d/mathchem-package>
 
@@ -34,7 +34,7 @@ After successfull installation you can immediately use **mathchem** in Python or
 
 Currently the package consists of two modules: **mathchem** and **utilites**.
 
-The first one contains the class *Mol*. In a current state the only way to initialize the Mol instance object with structure data is to give a *graph6* string as an argument: `m = mc.Mol('GhCH?_')`. Support of *SMILES* and *SDF* formats will be added later.
+The first one contains the class *Mol*. In a current state the only way to initialize the Mol instance object with structure data is to give a *graph6* or *sparse6* string as an argument: `m = mc.Mol('GhCH?_')`. Support of *SMILES* format will be added later.
 
 The second module **utilites** contains some useful functions. Currently there is only one function `batch_process(infile, outfile, function)` which allows to easily read a text file sting by string, pass read data to a function and write return value to another file. Here is an axample of use:
         
@@ -158,14 +158,14 @@ numpy
 
 ###As Sage module
 
-Download **spkg** file from <http://osebje.famnit.upr.si/~alexander.vasilyev/downloads/mathchem-0.2.1.spkg>
+Download **spkg** file from <http://osebje.famnit.upr.si/~alexander.vasilyev/downloads/mathchem-1.0.0.spkg>
 
 Save it into your **sage** directory
 
 Run sage with command to install a new package:
 
 
-    sage -f mathchem-0.2.1.spkg
+    sage -f mathchem-1.0.0.spkg
 
 
 After that you can use **mathchem** in your sage programs:
@@ -207,5 +207,3 @@ The *distance matrix* will be calculated only once - before calculating the firs
 
 Mathchem package written by Alexander Vasilyev, PhD student of University of Primorska under supervision of prof. Dragan Stevanović.
 All contacts details can be found at the homepage of the project: <https://github.com/hamster3d/mathchem-package>
-
-<http://goo.gl/76WNF>
