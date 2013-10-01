@@ -3,6 +3,7 @@
 Mathchem is a free open source Python package for calculating topological indices and other invariants of molecular graphs.
 
 The sources are hosted by Github: <https://github.com/hamster3d/mathchem-package>
+The homepage of the project: <http://mathchem.iam.upr.si/>
 
 The package was tested under Mac OS X. Since the package contains no compiled code it is cross-platform and could be used in any operating system compatible with Python.
 
@@ -158,7 +159,7 @@ numpy
 
 ###As Sage module
 
-Download **spkg** file from <http://osebje.famnit.upr.si/~alexander.vasilyev/downloads/mathchem-1.0.0.spkg>
+Download **spkg** file from <http://mathchem.iam.upr.si/>
 
 Save it into your **sage** directory
 
@@ -206,4 +207,4 @@ The *distance matrix* will be calculated only once - before calculating the firs
 ##About
 
 Mathchem package written by Alexander Vasilyev, PhD student of University of Primorska under supervision of prof. Dragan Stevanović.
-All contacts details can be found at the homepage of the project: <https://github.com/hamster3d/mathchem-package>
+All contacts details can be found at the homepage of the project: <http://mathchem.iam.upr.si/>
