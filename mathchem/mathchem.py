@@ -130,10 +130,18 @@ class Mol ():
     def order(self):
         """ Return number of vertices """
         return self.__Order
+    # alias for order
+    n = order
     
     def edges(self):
-        """ Return list of Edges """    
+        """ Return list of edges """    
         return self.__Edges
+    
+    def size(self):
+        """ Return number of edges"""
+        return len(self.__Edges)
+    # alias for size
+    m = size
     
     def vertices(self):
         """ Return list of vertices """
@@ -141,7 +149,6 @@ class Mol ():
            
     def sage_graph(self):
         """ Return Sage Graph object """
-        #if not self._is_sage_graph(): self._init_sage_graph_()
         if self.__Sage_graph is None: self._init_sage_graph_()
         return self.__Sage_graph
          
