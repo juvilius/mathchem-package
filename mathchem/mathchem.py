@@ -173,9 +173,11 @@ class Mol ():
         def graph_bit(pos,off):
             return ( (ord(s[off + 1+ pos/6]) - 63) & (2**(5-pos%6)) ) != 0
         
+        if s.startswith('>>graph6<<'):
+            s = s[10:]
         # reset all the attributes before changing the structure    
         self._reset_()
-              
+        
                 
         n = ord(s[0]) - 63
         off = 0
@@ -209,19 +211,23 @@ class Mol ():
                 
         self.__g6_string = s
     
-
+    read_graph6 = read_g6
+    
     def read_s6(self, s):
         """ Initialize graph from sparse6 string """
         def graph_bit(pos,off):
             return ( (ord(s[off + 1+ pos/6]) - 63) & (2**(5-pos%6)) ) != 0
         
-        # reset all the attributes before changing the structure    
-        self._reset_()
         
+        if s.startswith('>>sparse6<<'):
+            s = s[11:]
         if not s[0] == ':':
             print 'This is not a sparse6 format!'
             return False
-              
+
+        # reset all the attributes before changing the structure    
+        self._reset_()
+                      
         s = s[1:]
         n = ord(s[0]) - 63
         off = 0
@@ -288,6 +294,7 @@ class Mol ():
         
         self.__g6_string = ''
 
+    read_sparse6 = read_s6
     
     def write_dot_file(self, filename):
     
