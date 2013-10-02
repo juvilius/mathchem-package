@@ -249,8 +249,8 @@ class Mol ():
        
         data = s[off+1:]
         
-        print n,k
-        print data
+        #print n,k
+        #print data
         
         def parseData():
             """Return stream of pairs b[i], x[i] for sparse6 format."""
