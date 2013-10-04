@@ -100,13 +100,13 @@ class Mol ():
                     string = string[11:]
                             
             if string[0] == ':':
-                print self.read_s6(string)
+                self.read_s6(string)
             else:
                 self.read_g6(string)
         
           
     def __repr__(self):
-        if self.__A != None: return  'Molecular graph on '+ str(self.__Order)+' vertices, g6: ' + self.__g6_string
+        if self.__A != None: return  'Molecular graph on '+ str(self.__Order)+' vertices and ' + str(self.size()) + 'edges'
         return 'Empty Molecular graph'
         
     def __len__(self):
@@ -604,7 +604,7 @@ class Mol ():
         
         parameters: matrix - see spectrum help
         """
-        return np.power(self.spectrum(matrix),k).tolist()
+        return np.sum(np.power(self.spectrum(matrix),k))
         
     # for arbitrary matrices use:
     # mathchem.spectral_radius(matrix)        
@@ -620,7 +620,9 @@ class Mol ():
         
         parameters: matrix - see spectrum help
         """
-        return np.float64(np.sum( map( lambda x: abs(x) ,self.spectrum(matrix)), dtype=np.float128))
+        s = self.spectrum(matrix)
+        a = np.sum(s,dtype=np.float128)/len(s)
+        return np.float64(np.sum( map( lambda x: abs(x-a) ,s), dtype=np.float128))
                 
                 
     def incidence_energy(self):
@@ -650,6 +652,13 @@ class Mol ():
         Zagreb M2 Index is a special case of Connectivity Index with power = 1"""
         return sum( map(lambda (e1, e2): self.degrees()[e1]*self.degrees()[e2] , self.edges()) )    
 
+    def zagreb_m1_coindex(self):
+        """ Zagreb M1 Coindex """
+        return 2*self.size()*(self.__Order-1)-self.zagreb_m1_index()
+            
+    def zagreb_m2_coindex(self):
+        """ Zagreb M2 Coindex """
+        return 2*(self.size()**2) - self.zagreb_m2_index() - self.zagreb_m1_index()*.5
     
     def connectivity_index(self, power):
         """ Connectivity index (R)"""

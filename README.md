@@ -90,6 +90,8 @@ After executing this code we can find calculated laplacian energy for all graphs
 
 * Zagreb M1 Index
 * Zagreb M2 Index
+* Zagreb M1 Coindex
+* Zagreb M2 Coindex
 * Connectivity index (R)
 * Eccentric Connectivity Index
 * Randic Index

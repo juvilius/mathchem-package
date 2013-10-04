@@ -253,7 +253,7 @@ def spectral_moment( k, matrix):
     
     parameters: matrix
     """
-    return np.power(spectrum(matrix),k).tolist()
+    return np.sum(np.power(spectrum(matrix),k))
         
 def spectral_radius(matrix):
     s = spectrum(matrix)
@@ -266,7 +266,9 @@ def energy(matrix):
     
     parameters: matrix
     """
-    return np.float64(np.sum( map( lambda x: abs(x) , spectrum(matrix)), dtype=np.float128))
+    s = spectrum(matrix)
+    a = np.sum(s,dtype=np.float128)/len(s)
+    return np.float64(np.sum( map( lambda x: abs(x-a) , s), dtype=np.float128))
     
     
 ###
