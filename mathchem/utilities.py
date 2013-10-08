@@ -9,7 +9,7 @@ def batch_process(infile, file_format, outfile, function, hydrogens=False) :
     f_out = open(outfile, 'w')
     f_in = open(infile, 'r')
     
-    if file_format == 'g6':
+    if file_format == 'g6' or file_format == 's6':
         for line in f_in:
             #line = f_in.readline()
             m = Mol(line)
@@ -281,7 +281,11 @@ def energy(matrix):
 def _read_from_NCI(url, hydrogens = False):
     import urllib2, tempfile
     
-    resp = urllib2.urlopen(url)
+    try:
+        resp = urllib2.urlopen(url)
+    except e:
+        print 'Can not open NCI online database.'
+        return False
     
     if resp.code != 200:
         print 'Server returned error code ', resp.code

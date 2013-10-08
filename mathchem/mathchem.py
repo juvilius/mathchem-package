@@ -106,7 +106,7 @@ class Mol ():
         
           
     def __repr__(self):
-        if self.__A != None: return  'Molecular graph on '+ str(self.__Order)+' vertices and ' + str(self.size()) + 'edges'
+        if self.__A != None: return  'Molecular graph on '+ str(self.__Order)+' vertices and ' + str(self.size()) + ' edges'
         return 'Empty Molecular graph'
         
     def __len__(self):
@@ -159,7 +159,8 @@ class Mol ():
             import networkx as nx
             self.__NX_graph = nx.Graph(self.__Edges)
         return self.__NX_graph
-        
+    
+    nx_graph = NX_graph    
         
     def _init_sage_graph_(self):
         """ Initialize SAGE graph from Adjacency matrix"""
@@ -296,6 +297,41 @@ class Mol ():
 
     read_sparse6 = read_s6
     
+    
+    def read_matrix(self, matrix):
+        """Initialize graph from adjacency matrix including numpy.matrix"""
+        if type(matrix) == np.matrix:
+            matrix = matrix.astype(int).tolist()
+        self._reset_()
+        self.__Order = len(matrix)
+        self.__A = matrix
+        
+        for i in range(self.__Order):
+            for j in range(i):
+                if matrix[i][j] == 1:
+                    self.__Edges.append((i,j))
+    
+    
+    def read_edgelist(self, edges):
+        """Initialize graph from list of edges.
+           Example:
+           m = mathchem.Mol()
+           m.read_edgelist( [(4,3),(3,1),(1,4))] )"""
+        # first relabel nodes
+        nodes = []
+        for e in edges:
+            if not e[0] in nodes: nodes.append(e[0])
+            if not e[1] in nodes: nodes.append(e[1])
+        self._reset_()
+        self.__Order = len(nodes)
+        d = dict(zip(nodes,range(len(nodes))))
+        self.__Edges = [(d[e[0]],d[e[1]]) for e in edges]
+        
+        self.__A = [[0 for col in range(self.__Order)] for row in range(self.__Order)]
+        for i,j in self.__Edges:
+            self.__A[i][j] = 1
+            self.__A[j][i] = 1  
+    
     def write_dot_file(self, filename):
     
         f_out = open(filename, 'w')
@@ -304,7 +340,7 @@ class Mol ():
             f_out.writelines( '    ' + str(i) + ' -- ' + str(j) +';\n')
         f_out.writelines('}')    
         f_out.close()
-                    
+          
     #
     #
     # matrices

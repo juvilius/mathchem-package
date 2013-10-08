@@ -11,7 +11,7 @@ The package was tested under Mac OS X. Since the package contains no compiled co
 
 After successfull installation you can immediately use **mathchem** in Python or Sage
 
-~~~~~~~~~~~~~~~~~~ {.python .numberLines}    
+~~~~~~~~~~~~~~~~~~ {.python .numberLines}
     python
     >>> import mathchem as mc
     >>> m = mc.Mol('GhCH?_')
