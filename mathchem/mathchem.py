@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Mol ():
     r"""
     Molecule.
@@ -265,10 +266,10 @@ class Mol ():
                     dLen = 6
                 dLen -= 1
                 b = (d>>dLen) & 1 # grab top remaining bit
-    			
+                
                 x = d & ((1<<dLen)-1) # partially built up value of x
-                xLen = dLen		# how many bits included so far in x
-                while xLen < k:	# now grab full chunks until we have enough
+                xLen = dLen     # how many bits included so far in x
+                while xLen < k: # now grab full chunks until we have enough
                     d = ord(next(chunks)) - 63
                     dLen = 6
                     x = (x<<6) + d
@@ -349,11 +350,10 @@ class Mol ():
     
     def adjacency_matrix(self):
         """ Return Adjacency matrix
-        
-        Alias : A
+    
+            Alias : A
         """    
         return self.__A
-        
     A = adjacency_matrix
     
     def incidence_matrix(self):
@@ -471,7 +471,7 @@ class Mol ():
             RD = np.ndarray((n,n))
             for i in range(n):
                 for j in range(n):
-                    RD[i,j] = np.float64( np.float128(sn[i,i]) + np.float128(sn[j,j]) - 2*np.float128(sn[i,j]) )
+                    RD[i,j] = np.float64( np.longdouble(sn[i,i]) + np.longdouble(sn[j,j]) - 2*np.longdouble(sn[i,j]) )
             self.__RD = RD
             
         return self.__RD
@@ -486,6 +486,7 @@ class Mol ():
         
         Diameter is the maximum value of distance matrix
         """
+        if self.__Order == 0: return 0
         return self.distance_matrix().max()
         
     
@@ -656,9 +657,10 @@ class Mol ():
         
         parameters: matrix - see spectrum help
         """
+        if self.__Order == 0: return False
         s = self.spectrum(matrix)
-        a = np.sum(s,dtype=np.float128)/len(s)
-        return np.float64(np.sum( map( lambda x: abs(x-a) ,s), dtype=np.float128))
+        a = np.sum(s,dtype=np.longdouble)/len(s)
+        return np.float64(np.sum( map( lambda x: abs(x-a) ,s), dtype=np.longdouble))
                 
                 
     def incidence_energy(self):
@@ -666,9 +668,9 @@ class Mol ():
             
         Incidence energy is the sum of singular values of incidence matrix
         """
-        if self.__Order == 0: return []
+        if self.__Order == 0: return False
         from numpy.linalg import svd
-        return np.float64(np.sum(svd(self.incidence_matrix(), compute_uv=False), dtype=np.float128))
+        return np.float64(np.sum(svd(self.incidence_matrix(), compute_uv=False), dtype=np.longdouble))
 
     #
     #
@@ -700,21 +702,26 @@ class Mol ():
         """ Connectivity index (R)"""
         E = self.edges() # E - all edges
         if len(E) == 0: return 0
-        return np.float64(np.sum( map(lambda (e1 ,e2): ( self.degrees()[e1]*self.degrees()[e2] ) ** power , E) , dtype=np.float128))
+        return np.float64(np.sum( map(lambda (e1 ,e2): ( self.degrees()[e1]*self.degrees()[e2] ) ** power , E) , dtype=np.longdouble))
 
-    augmented_zagreb_index = connectivity_index
+    def augmented_zagreb_index(self):
+        """ Augmented Zagreb Index"""
+        E = self.edges() # E - all edges
+        d = self.degrees()
+        if len(E) < 2: return 0
+        return np.float64(np.sum( map(lambda (e1 ,e2): (np.longdouble(d[e1]*d[e2]) / (d[e1]+d[e2]-2)) **3, E) , dtype=np.longdouble))
 
     def sum_connectivity_index(self):
         """ Sum-Connectivity index"""
         E = self.edges() # E - all edges
         if len(E) == 0: return 0
-        return np.float64(np.sum( map(lambda (e1 ,e2): ( self.degrees()[e1]+self.degrees()[e2] ) ** (-0.5) , E) , dtype=np.float128)) 
+        return np.float64(np.sum( map(lambda (e1 ,e2): ( self.degrees()[e1]+self.degrees()[e2] ) ** (-0.5) , E) , dtype=np.longdouble)) 
         
     def geometric_arithmetic_index(self):
         """ Geometric-Arithmetic index"""
         E = self.edges() # E - all edges
         if len(E) == 0: return 0
-        return np.float64(np.sum( map(lambda (e1 ,e2): 2.0*np.sqrt(self.degrees()[e1]*self.degrees()[e2] ) / (self.degrees()[e1]+self.degrees()[e2])  , E) , dtype=np.float128)) 
+        return np.float64(np.sum( map(lambda (e1 ,e2): 2.0*np.sqrt(self.degrees()[e1]*self.degrees()[e2] ) / (self.degrees()[e1]+self.degrees()[e2])  , E) , dtype=np.longdouble)) 
            
     def eccentric_connectivity_index(self):
         """ Eccentric Connectivity Index 
@@ -732,14 +739,14 @@ class Mol ():
         Randic Index is a special case of Connectivity Index with power = -1/2"""
         return self.connectivity_index(-0.5)
                         
-    ### refactor it!
+
     def atom_bond_connectivity_index(self):
         """ Atom-Bond Connectivity Index (ABC) """
-        s = np.float128(0) # summator
+        s = np.longdouble(0) # summator
         for (u,v) in self.edges():
             d1 = np.float64(self.degrees()[u])
             d2 = np.float64(self.degrees()[v])
-            s += np.float128( ( (d1 + d2 - 2 ) / (d1 * d2)) ** .5 )
+            s += np.longdouble( ( (d1 + d2 - 2 ) / (d1 * d2)) ** .5 )
         return np.float64(s)
     
     
@@ -751,7 +758,7 @@ class Mol ():
             
         There is an alias 'distance_estrada_index' for distance matrix
         """
-        return np.float64(np.sum( map( lambda x: np.exp( x.real ) , self.spectrum(matrix) ) ,dtype=np.float128 )) 
+        return np.float64(np.sum( map( lambda x: np.exp( x.real ) , self.spectrum(matrix) ) ,dtype=np.longdouble )) 
         
         
     def distance_estrada_index(self):
@@ -791,7 +798,7 @@ class Mol ():
 
         A = np.matrix(self.__A)
         d = np.matrix(self.degrees())
-        return np.float64(( (A + self.distance_matrix()) * d.T ).sum(dtype=np.float128))
+        return np.float64(( (A + self.distance_matrix()) * d.T ).sum(dtype=np.longdouble))
     
         
     def eccentric_distance_sum(self):
@@ -813,7 +820,7 @@ class Mol ():
         ds = self.distance_matrix().sum(axis=1)
         m = len(self.edges())
         k = (m / ( m - self.__Order +2.0 ))
-        return np.float64(k * np.sum( map(lambda (u ,v): 1 / np.sqrt((ds[u][0,0]*ds[v][0,0])), self.edges() ), dtype=np.float128))
+        return np.float64(k * np.sum( map(lambda (u ,v): 1 / np.sqrt((ds[u][0,0]*ds[v][0,0])), self.edges() ), dtype=np.longdouble))
         
     def sum_balaban_index(self):
         """ Sum Balaban index 
@@ -824,7 +831,7 @@ class Mol ():
         ds = self.distance_matrix().sum(axis=1)
         m = len(self.edges())
         k = (m / ( m - self.__Order +2.0 ))
-        return np.float64(k * np.sum( map(lambda (u ,v): 1 / np.sqrt((ds[u][0,0]+ds[v][0,0])), self.edges() ), dtype=np.float128))
+        return np.float64(k * np.sum( map(lambda (u ,v): 1 / np.sqrt((ds[u][0,0]+ds[v][0,0])), self.edges() ), dtype=np.longdouble))
     
         
     def kirchhoff_index(self):
@@ -839,7 +846,7 @@ class Mol ():
         """
         if not self.is_connected():
             return False 
-        return np.float64(self.resistance_distance_matrix().sum(dtype=np.float128) / 2)
+        return np.float64(self.resistance_distance_matrix().sum(dtype=np.longdouble) / 2)
         
     resistance = kirchhoff_index
     
@@ -906,26 +913,26 @@ class Mol ():
         """
         if not self.is_connected():
             return False         
-        return np.float64(self.reciprocal_distance_matrix().sum(dtype=np.float128))
+        return np.float64(self.reciprocal_distance_matrix().sum(dtype=np.longdouble))
         
     def LEL(self):
         """ Return Laplacian-like energy (LEL) """
-        return np.float64(np.sum( map( lambda x: np.sqrt(x) ,self.spectrum('laplacian')), dtype=np.float128))
+        return np.float64(np.sum( map( lambda x: np.sqrt(x) ,self.spectrum('laplacian')), dtype=np.longdouble))
 
     def multiplicative_sum_zagreb_index(self):
         """ Log( Multiplicative Sum Zagreb index )""" 
         d = self.degrees()
-        return np.float64(np.sum( map( lambda (u,v): np.log(np.float64(d[u]+d[v])), self.edges()) , dtype=np.float128))
+        return np.float64(np.sum( map( lambda (u,v): np.log(np.float64(d[u]+d[v])), self.edges()) , dtype=np.longdouble))
         
     def multiplicative_p2_zagreb_index(self):
         """Calculates Log( Multiplicative P2 Zagreb index )""" 
         d = self.degrees()
-        return np.float64(np.sum( map( lambda (u,v): np.log(np.float64(d[u]*d[v])), self.edges()) , dtype=np.float128))
+        return np.float64(np.sum( map( lambda (u,v): np.log(np.float64(d[u]*d[v])), self.edges()) , dtype=np.longdouble))
     
     def multiplicative_p1_zagreb_index(self):
         """Calculates Log( Multiplicative P1 Zagreb index )""" 
         d = self.degrees()
-        return np.float64(np.sum( map( lambda v: np.log(np.float64(d[v]**2)), self.vertices()) , dtype=np.float128))
+        return np.float64(np.sum( map( lambda v: np.log(np.float64(d[v]**2)), self.vertices()) , dtype=np.longdouble))
         
         
     # Adriatic indices
@@ -1017,7 +1024,7 @@ class Mol ():
         else: d = self.distance_matrix().sum(axis=0).tolist()[0]
         
         func  = lambda (u, v) : self._adriatic_entry_(np.float64(d[u]), np.float64(d[v]), i,j,a)
-        return np.float64(np.sum( map( func, self.edges()) , dtype=np.float128))
+        return np.float64(np.sum( map( func, self.edges()) , dtype=np.longdouble))
     
     # Adriatic indices by names
     
