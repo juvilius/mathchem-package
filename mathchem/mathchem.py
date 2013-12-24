@@ -934,6 +934,17 @@ class Mol ():
         d = self.degrees()
         return np.float64(np.sum( map( lambda v: np.log(np.float64(d[v]**2)), self.vertices()) , dtype=np.longdouble))
         
+    
+    def szeged_index(self):
+        """Calculates Szeged index"""
+        if not self.is_connected():
+            return False  
+        s = 0
+        D = self.distance_matrix()
+        for u,v in self.edges():
+            diff = D[u,:] - D[v,:]
+            s += (diff>0).sum()*(diff<0).sum()
+        return float(s)
         
     # Adriatic indices
 
