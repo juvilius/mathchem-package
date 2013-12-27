@@ -475,6 +475,19 @@ class Mol ():
             self.__RD = RD
             
         return self.__RD
+    
+    
+    def seidel_matrix(self):
+        """ Return Seidel matrix 
+            S = J - I - 2A
+
+        Alias: S
+        """
+        n = self.__Order
+        return np.ones((n,n))-np.identity(n) -2*np.matrix(self.__A)
+        
+    S = seidel_matrix
+    
     #
     #
     # Graph invariants
