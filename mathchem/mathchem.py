@@ -959,6 +959,35 @@ class Mol ():
             s += (diff>0).sum()*(diff<0).sum()
         return float(s)
         
+        
+    def revised_szeged_index(self):
+        """Calculates Revised Szeged index"""
+        if not self.is_connected():
+            return False  
+        s = 0.0
+        D = self.distance_matrix()
+        for u,v in self.edges():
+            diff = D[u,:] - D[v,:]
+            o = (diff==0).sum()
+            s += ((diff>0).sum()+.5*o)*((diff<0).sum()+.5*o)
+        return s
+        
+        
+    def homo_lumo_index(self):
+        """Calculates HOMO-LUMO index"""    
+        if not self.is_connected():
+            return False
+        n = self.order()
+        if n%2 == 0:
+            h = int(n/2 -1) # because array indices start from 0 instead of 1
+            l = int(h+1)
+            return max([ abs(self.spectrum()[h]), abs(self.spectrum()[l]) ])
+        # else:
+        h = int((n-1)/2)
+        return abs(self.spectrum()[h])
+        
+    HL_index = homo_lumo_index
+    
     # Adriatic indices
 
     

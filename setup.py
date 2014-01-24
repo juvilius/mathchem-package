@@ -7,7 +7,7 @@ def read(fname):
 
 setup(
     name = "mathchem",
-    version = "1.1.1",
+    version = "1.1.2",
     description = "",
     long_description = read('README.md'),
     url = 'https://github.com/hamster3d/mathchem-package',
