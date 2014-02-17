@@ -917,7 +917,7 @@ class Mol ():
     def harary_index(self):
         """ Harary Index (H)
         
-        H = sum_i sum_j Rd[i,j]
+        H = 1/2 sum_i sum_j Rd[i,j]
         where Rd is reciprocal distance matrix 
         Rd[i,j] = 1 / D[i,j] for D[i,j] != 0
         Rd[i,j] = 0 otherwise
@@ -926,7 +926,7 @@ class Mol ():
         """
         if not self.is_connected():
             return False         
-        return np.float64(self.reciprocal_distance_matrix().sum(dtype=np.longdouble))
+        return np.float64(self.reciprocal_distance_matrix().sum(dtype=np.longdouble))/2
         
     def LEL(self):
         """ Return Laplacian-like energy (LEL) """
