@@ -1,4 +1,4 @@
-##What is Mathchem?
+## What is Mathchem?
 
 Mathchem is a free open source Python package for calculating topological indices and other invariants of molecular graphs.
 
@@ -31,7 +31,7 @@ After successfull installation you can immediately use **mathchem** in Python or
             [ 0,  0,  0, -1,  0,  0,  0,  1]])
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             
-##Structure
+## Structure
 
 Currently the package consists of two modules: **mathchem** and **utilites**.
 
@@ -52,8 +52,8 @@ The second module **utilites** contains some useful functions. Currently there i
 After executing this code we can find calculated laplacian energy for all graphs listed in *'graphs.g6'* file as *graph6* strings in *'result.txt'*. In fact, we just applied function *calculate_laplacian_energy* to each line of file *'graphs.g6'* and wrote the result in *'result.txt'*.
 
 
-##Functionality
-###Calculates matrices:
+## Functionality
+### Calculates matrices:
 * Adjacency
 * Incidence
 * Laplacian
@@ -78,7 +78,7 @@ After executing this code we can find calculated laplacian energy for all graphs
             [4, 3, 2, 1, 2, 3, 3, 0]])
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 
-###Calculates graph spectral properties:    
+### Calculates graph spectral properties:    
 
 * Spectrum of the all matrices above
 * Spectral moments
@@ -86,7 +86,7 @@ After executing this code we can find calculated laplacian energy for all graphs
 * Energy
 * Incidence Energy
 
-###Calculates topological indices:
+### Calculates topological indices:
 
 * Zagreb M1 Index
 * Zagreb M2 Index
@@ -133,7 +133,7 @@ After executing this code we can find calculated laplacian energy for all graphs
     -1.4606244785164448, -2.744728088663583, -3.615279075919263, -7.971860853700944]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
-###Calculates graph properties:
+### Calculates graph properties:
 * Order
 * Diameter
 * Degree
@@ -149,17 +149,17 @@ After executing this code we can find calculated laplacian energy for all graphs
         [1, 2, 3, 3, 2, 1, 1, 1]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-##Installation
+## Installation
 
-###As Python module
+### As Python module
 For any UNIX-like system the installation process is trivial:
 
     pip install mathchem    
 
-####Depends on:
+#### Depends on:
 numpy
 
-###As Sage module
+### As Sage module
 
 Download **spkg** file from <http://mathchem.iam.upr.si/>
 
@@ -181,7 +181,7 @@ After that you can use **mathchem** in your sage programs:
 
 
 
-##Sage
+## Sage
 Sage is a free open-source mathematics software system licensed under the GPL. It combines the power of many existing open-source packages into a common Python-based interface.
 
 Mission: Creating a viable free open source alternative to Magma, Maple, Mathematica and Matlab.
@@ -190,7 +190,7 @@ Mission: Creating a viable free open source alternative to Magma, Maple, Mathema
 
 
 
-##Conception of lazy calculations
+## Conception of lazy calculations
 
 For performance reasons we calculate data only when it is needed and then we save the results.
 
@@ -206,7 +206,7 @@ For instance we want to calculate three indices based on distance, let say, *Ecc
 
 The *distance matrix* will be calculated only once - before calculating the first index. 
 
-##About
+## About
 
 Mathchem package written by Alexander Vasilyev, PhD student of University of Primorska under supervision of prof. Dragan Stevanović.
 All contacts details can be found at the homepage of the project: <http://mathchem.iam.upr.si/>
