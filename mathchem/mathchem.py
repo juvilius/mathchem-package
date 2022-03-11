@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class Mol ():
+class Mol():
     r"""
     Molecule.
     """
@@ -23,24 +23,23 @@ class Mol ():
 
     __Order = 0
     __Edges = []
-    
+
     __Sage_graph = None
     __NX_graph = None
-    
+
     __Degrees = []
-    
-    
+
     __Spectrum = []
     __Laplacian_spectrum = []
     __Distance_spectrum = []
     __Norm_laplacian_spectrum = []
     __Signless_laplacian_spectrum = []
     __RD_spectrum = []
-    
+
     __Is_connected = None
     # Switch it to False when we know that the graph is connected. Useful for big calculations
     __Check_connectedness = True
-    
+
     def _reset_(self):
         """ Reset all attributes """
         self.__g6_string = ''
@@ -58,37 +57,36 @@ class Mol ():
         self.__D = []
         # Resistance Distance matrix
         self.__RD = []
-    
+
         self.__Order = 0
         self.__Edges = []
-        
+
         self.__Sage_graph = None
         self.__NX_graph = None
-        
+
         self.__Degrees = []
-        
-        
+
         self.__Spectrum = []
         self.__Laplacian_spectrum = []
         self.__Distance_spectrum = []
         self.__Norm_laplacian_spectrum = []
         self.__Signless_laplacian_spectrum = []
         self.__RD_spectrum = []
-        
+
         self.__Is_connected = None
-    
+
     # allow to set structure from somewhere
     # used in utilites
-    
+
     def _set_A(self, A):
         self.__A = A
-        
+
     def _set_Edges(self, edges):
         self.__Edges = edges
-        
+
     def _set_Order(self, order):
         self.__Order = order
-    
+
     # native method to initialize Mol class is to provide g6 string
     def __init__(self, string=None, check_connectedness=True):
         """ Molecular graph class """
@@ -99,21 +97,22 @@ class Mol ():
                     string = string[10:]
                 elif string.startswith('>>sparse6<<'):
                     string = string[11:]
-                            
+
             if string[0] == ':':
                 self.read_s6(string)
             else:
                 self.read_g6(string)
-        
-          
+
     def __repr__(self):
-        if self.__A != None: return  'Molecular graph on '+ str(self.__Order)+' vertices and ' + str(self.size()) + ' edges'
+        if self.__A != None:
+            return 'Molecular graph on ' + str(
+                self.__Order) + ' vertices and ' + str(self.size()) + ' edges'
         return 'Empty Molecular graph'
-        
+
     def __len__(self):
         if self.__A != None: return len(self.__A)
         else: return 0
-    
+
     def set_check_connectedness(self, c):
         """ Switch on/off of checking connectedness for the graph. Might be useful in batch calculations to economy time.
         args: c (True/False)
@@ -125,180 +124,187 @@ class Mol ():
         
         Alias: graph6_string """
         return self.__g6_string
-    # alias like in Sage:    
+
+    # alias like in Sage:
     graph6_string = g6_string
-    
+
     def order(self):
         """ Return number of vertices """
         return self.__Order
+
     # alias for order
     n = order
-    
+
     def edges(self):
-        """ Return list of edges """    
+        """ Return list of edges """
         return self.__Edges
-    
+
     def size(self):
         """ Return number of edges"""
         return len(self.__Edges)
+
     # alias for size
     m = size
-    
+
     def vertices(self):
         """ Return list of vertices """
         return range(self.__Order)
-           
+
     def sage_graph(self):
         """ Return Sage Graph object """
         if self.__Sage_graph is None: self._init_sage_graph_()
         return self.__Sage_graph
-         
-            
+
     def NX_graph(self):
         """ Return NetworkX graph object """
         if self.__NX_graph is None:
             import networkx as nx
             self.__NX_graph = nx.Graph(self.__Edges)
         return self.__NX_graph
-    
-    nx_graph = NX_graph    
-        
+
+    nx_graph = NX_graph
+
     def _init_sage_graph_(self):
         """ Initialize SAGE graph from Adjacency matrix"""
         from sage.graphs.graph import Graph
         self.__Sage_graph = Graph(self.__Edges)
-            
-            
+
     def read_g6(self, s):
         """ Initialize graph from graph6 string """
-        
-        def graph_bit(pos,off):
-            return ( (ord(s[off + 1+ pos/6]) - 63) & (2**(5-pos%6)) ) != 0
-        
+
+        def graph_bit(pos, off):
+            return ((ord(s[off + 1 + pos / 6]) - 63) & (2**(5 - pos % 6))) != 0
+
         if s.startswith('>>graph6<<'):
             s = s[10:]
-        # reset all the attributes before changing the structure    
+        # reset all the attributes before changing the structure
         self._reset_()
-        
-                
+
         n = ord(s[0]) - 63
         off = 0
-        if n==63:
+        if n == 63:
             if ord(s[1]) - 63 != 63:
-                n = ((ord(s[1])-63)<<12) + ((ord(s[2])-63)<<6) + ord(s[3])-63
-                
+                n = ((ord(s[1]) - 63) << 12) + (
+                    (ord(s[2]) - 63) << 6) + ord(s[3]) - 63
+
                 off = 3
             else:
-                n = ((ord(s[2])-63)<<30) + ((ord(s[3])-63)<<24) + ((ord(s[4])-63)<<18) + ((ord(s[5])-63)<<12) + ((ord(s[6])-63)<<6) + ord(s[7])-63
-                
+                n = ((ord(s[2]) - 63) << 30) + ((ord(s[3]) - 63) << 24) + (
+                    (ord(s[4]) - 63) << 18) + ((ord(s[5]) - 63) << 12) + (
+                        (ord(s[6]) - 63) << 6) + ord(s[7]) - 63
+
                 off = 7
-                
-        self.__Order = n     
-    
+
+        self.__Order = n
+
         self.__A = [[0 for col in range(n)] for row in range(n)]
-    
-        i=0; j=1
-        
-        self.__Edges = [];
-        for x in range(n*(n-1)/2):
+
+        i = 0
+        j = 1
+
+        self.__Edges = []
+        for x in range(n * (n - 1) / 2):
             if graph_bit(x, off):
                 self.__A[i][j] = 1
                 self.__A[j][i] = 1
-                self.__Edges.append((i,j))
-            if j-i == 1:
-                i=0
-                j+=1
+                self.__Edges.append((i, j))
+            if j - i == 1:
+                i = 0
+                j += 1
             else:
-                i+=1
-                
+                i += 1
+
         self.__g6_string = s
-    
+
     read_graph6 = read_g6
-    
+
     def read_s6(self, s):
         """ Initialize graph from sparse6 string """
-        def graph_bit(pos,off):
-            return ( (ord(s[off + 1+ pos/6]) - 63) & (2**(5-pos%6)) ) != 0
-        
-        
+
+        def graph_bit(pos, off):
+            return ((ord(s[off + 1 + pos / 6]) - 63) & (2**(5 - pos % 6))) != 0
+
         if s.startswith('>>sparse6<<'):
             s = s[11:]
         if not s[0] == ':':
-            print 'This is not a sparse6 format!'
+            print('This is not a sparse6 format!')
             return False
 
-        # reset all the attributes before changing the structure    
+        # reset all the attributes before changing the structure
         self._reset_()
-                      
+
         s = s[1:]
         n = ord(s[0]) - 63
         off = 0
-        if n==63:
+        if n == 63:
             if ord(s[1]) - 63 != 63:
-                n = ((ord(s[1])-63)<<12) + ((ord(s[2])-63)<<6) + ord(s[3])-63
-                
+                n = ((ord(s[1]) - 63) << 12) + (
+                    (ord(s[2]) - 63) << 6) + ord(s[3]) - 63
+
                 off = 3
             else:
-                n = ((ord(s[2])-63)<<30) + ((ord(s[3])-63)<<24) + ((ord(s[4])-63)<<18) + ((ord(s[5])-63)<<12) + ((ord(s[6])-63)<<6) + ord(s[7])-63
-                
+                n = ((ord(s[2]) - 63) << 30) + ((ord(s[3]) - 63) << 24) + (
+                    (ord(s[4]) - 63) << 18) + ((ord(s[5]) - 63) << 12) + (
+                        (ord(s[6]) - 63) << 6) + ord(s[7]) - 63
+
                 off = 7
-                
-        self.__Order = n     
-        
+
+        self.__Order = n
+
         k = 1
-        while 1<<k < n:
-           k += 1
-       
-        data = s[off+1:]
-        
+        while 1 << k < n:
+            k += 1
+
+        data = s[off + 1:]
+
         #print n,k
         #print data
-        
+
         def parseData():
             """Return stream of pairs b[i], x[i] for sparse6 format."""
             chunks = iter(data)
-            d = None # partial data word
-            dLen = 0 # how many unparsed bits are left in d
-        
+            d = None  # partial data word
+            dLen = 0  # how many unparsed bits are left in d
+
             while 1:
                 if dLen < 1:
-                    d = ord(next(chunks))-63
-                    dLen = 6
-                dLen -= 1
-                b = (d>>dLen) & 1 # grab top remaining bit
-                
-                x = d & ((1<<dLen)-1) # partially built up value of x
-                xLen = dLen     # how many bits included so far in x
-                while xLen < k: # now grab full chunks until we have enough
                     d = ord(next(chunks)) - 63
                     dLen = 6
-                    x = (x<<6) + d
+                dLen -= 1
+                b = (d >> dLen) & 1  # grab top remaining bit
+
+                x = d & ((1 << dLen) - 1)  # partially built up value of x
+                xLen = dLen  # how many bits included so far in x
+                while xLen < k:  # now grab full chunks until we have enough
+                    d = ord(next(chunks)) - 63
+                    dLen = 6
+                    x = (x << 6) + d
                     xLen += 6
-                x = (x >> (xLen - k)) # shift back the extra bits
+                x = (x >> (xLen - k))  # shift back the extra bits
                 dLen = xLen - k
-                yield b,x
+                yield b, x
 
         self.__A = [[0 for col in range(n)] for row in range(n)]
-    
-        
-        self.__Edges = [];
-        
+
+        self.__Edges = []
+
         v = 0
-        
-        for b,x in parseData():
+
+        for b, x in parseData():
             if b: v += 1
-            if x >= n: break # padding with ones can cause overlarge number here
-            elif x > v: v = x
+            if x >= n:
+                break  # padding with ones can cause overlarge number here
+            elif x > v:
+                v = x
             else:
                 self.__A[x][v] = 1
                 self.__A[v][x] = 1
-                self.__Edges.append((x,v))
-        
+                self.__Edges.append((x, v))
+
         self.__g6_string = ''
 
     read_sparse6 = read_s6
-    
-    
+
     def read_matrix(self, matrix):
         """Initialize graph from adjacency matrix including numpy.matrix"""
         if type(matrix) == np.matrix:
@@ -306,13 +312,12 @@ class Mol ():
         self._reset_()
         self.__Order = len(matrix)
         self.__A = matrix
-        
+
         for i in range(self.__Order):
             for j in range(i):
                 if matrix[i][j] == 1:
-                    self.__Edges.append((i,j))
-    
-    
+                    self.__Edges.append((i, j))
+
     def read_edgelist(self, edges):
         """Initialize graph from list of edges.
            Example:
@@ -325,56 +330,59 @@ class Mol ():
             if not e[1] in nodes: nodes.append(e[1])
         self._reset_()
         self.__Order = len(nodes)
-        d = dict(zip(nodes,range(len(nodes))))
-        self.__Edges = [(d[e[0]],d[e[1]]) for e in edges]
-        
-        self.__A = [[0 for col in range(self.__Order)] for row in range(self.__Order)]
-        for i,j in self.__Edges:
+        d = dict(zip(nodes, range(len(nodes))))
+        self.__Edges = [(d[e[0]], d[e[1]]) for e in edges]
+
+        self.__A = [[0 for col in range(self.__Order)]
+                    for row in range(self.__Order)]
+        for i, j in self.__Edges:
             self.__A[i][j] = 1
-            self.__A[j][i] = 1  
-    
+            self.__A[j][i] = 1
+
     def write_dot_file(self, filename):
-    
+
         f_out = open(filename, 'w')
         f_out.writelines('graph Mol {\n')
-        for (i,j) in self.edges():
-            f_out.writelines( '    ' + str(i) + ' -- ' + str(j) +';\n')
-        f_out.writelines('}')    
+        for (i, j) in self.edges():
+            f_out.writelines('    ' + str(i) + ' -- ' + str(j) + ';\n')
+        f_out.writelines('}')
         f_out.close()
-          
+
     #
     #
     # matrices
     #
     #
-    
+
     def adjacency_matrix(self):
         """ Return Adjacency matrix
     
             Alias : A
-        """    
+        """
         return self.__A
+
     A = adjacency_matrix
-    
+
     def incidence_matrix(self):
         """ Return Incidence matrix 
         
         Alias: B
         """
         if self.__B == []:
-            def func((u,v)):
+
+            def func(u, v):
                 col = [0] * self.__Order
                 col[u] = 1
                 col[v] = 1
                 return col
+
             # apply func to each edge
             b = map(lambda e: func(e), self.edges())
             # transpose the result
-            self.__B = map(list, zip(*b)) 
+            self.__B = map(list, zip(*b))
         return self.__B
-        
-    B = incidence_matrix
 
+    B = incidence_matrix
 
     def laplacian_matrix(self):
         """ Return Laplacian matrix
@@ -386,12 +394,11 @@ class Mol ():
         Alias : L
         """
         if self.__L == []:
-            self.__L = np.diag(self.degrees()) - np.matrix(self.__A);
+            self.__L = np.diag(self.degrees()) - np.matrix(self.__A)
         return self.__L
-        
+
     L = laplacian_matrix
-    
-    
+
     def signless_laplacian_matrix(self):
         """ Return Signless Laplacian matrix
         
@@ -400,12 +407,11 @@ class Mol ():
         """
         if self.__Q == []:
 
-            self.__Q = np.diag(self.degrees()) + np.matrix(self.__A);
+            self.__Q = np.diag(self.degrees()) + np.matrix(self.__A)
         return self.__Q
-        
+
     Q = signless_laplacian_matrix
-    
-    
+
     def normalized_laplacian_matrix(self):
         """ Return Normalized Laplacian matrix
         
@@ -413,70 +419,69 @@ class Mol ():
         Alias : NL
         """
         ## TODO: check if we have zeros in degrees()
-        if self.__NL  == []:
-            d1 = np.diag( np.power( self.degrees(), -.5 ))
-            d2 = np.diag( np.power( self.degrees(),  .5 ))
+        if self.__NL == []:
+            d1 = np.diag(np.power(self.degrees(), -.5))
+            d2 = np.diag(np.power(self.degrees(), .5))
             self.__NL = d1 * self.laplacian_matrix() * d2
         return self.__NL
-        
-    NL = normalized_laplacian_matrix
 
+    NL = normalized_laplacian_matrix
 
     def distance_matrix(self):
         """ Return Distance matrix
         
         Alias : D
-        """    
+        """
         if self.__Order == 0: return []
-        
-        if self.__D == [] :
+
+        if self.__D == []:
             # use here float only for using np.inf - infinity
             A = np.matrix(self.__A, dtype=float)
-            n,m = A.shape
-            I=np.identity(n)
-            A[A==0]=np.inf # set zero entries to inf
-            A[I==1]=0 # except diagonal which should be zero
+            n, m = A.shape
+            I = np.identity(n)
+            A[A == 0] = np.inf  # set zero entries to inf
+            A[I == 1] = 0  # except diagonal which should be zero
             for i in range(n):
-                r = A[i,:]
+                r = A[i, :]
                 A = np.minimum(A, r + r.T)
-            self.__D = np.matrix(A,dtype=int)
-            
-        return self.__D  
-        
+            self.__D = np.matrix(A, dtype=int)
+
+        return self.__D
+
     D = distance_matrix
-    
+
     def reciprocal_distance_matrix(self):
         """ Return Reciprocal Distance matrix """
 
-        rd = np.matrix(self.distance_matrix(),dtype=float)
+        rd = np.matrix(self.distance_matrix(), dtype=float)
         # probably there exists more python way to apply a function to each element of matrix
         for i in range(self.__Order):
             for j in range(self.__Order):
-                if not rd[i,j] == 0: rd[i,j] = 1 / rd[i,j]
-        
+                if not rd[i, j] == 0: rd[i, j] = 1 / rd[i, j]
+
         return rd
 
-    
     def resistance_distance_matrix(self):
         """ Return Resistance Distance matrix """
-        
+
         if not self.is_connected() or self.__Order == 0:
             return False
-            
+
         if self.__RD == []:
             #from numpy import linalg as la
             n = self.__Order
-            s = n*self.laplacian_matrix() + 1
-            sn = n* np.linalg.inv(s)
-            RD = np.ndarray((n,n))
+            s = n * self.laplacian_matrix() + 1
+            sn = n * np.linalg.inv(s)
+            RD = np.ndarray((n, n))
             for i in range(n):
                 for j in range(n):
-                    RD[i,j] = np.float64( np.longdouble(sn[i,i]) + np.longdouble(sn[j,j]) - 2*np.longdouble(sn[i,j]) )
+                    RD[i, j] = np.float64(
+                        np.longdouble(sn[i, i]) + np.longdouble(sn[j, j]) -
+                        2 * np.longdouble(sn[i, j]))
             self.__RD = RD
-            
+
         return self.__RD
-    
-    
+
     def seidel_matrix(self):
         """ Return Seidel matrix 
             S = J - I - 2A
@@ -484,16 +489,16 @@ class Mol ():
         Alias: S
         """
         n = self.__Order
-        return np.ones((n,n))-np.identity(n) -2*np.matrix(self.__A)
-        
+        return np.ones((n, n)) - np.identity(n) - 2 * np.matrix(self.__A)
+
     S = seidel_matrix
-    
+
     #
     #
     # Graph invariants
     #
     #
-    
+
     def diameter(self):
         """ Return diameter of the graph
         
@@ -501,69 +506,65 @@ class Mol ():
         """
         if self.__Order == 0: return 0
         return self.distance_matrix().max()
-        
-    
-        
+
     def degrees(self):
         """ Return degree of the vertex
         
         Alias : deg
         """
         if self.__Degrees == []:
-            self.__Degrees = map(lambda r: sum(r) , self.__A)
+            self.__Degrees = map(lambda r: sum(r), self.__A)
         ## calcuate degrees for all vertices
         return self.__Degrees
-        
+
     deg = degrees
-                
-                
+
     def eccentricity(self):
         """ Eccentricity of the graph for all its vertices"""
         if self.__Order == 0: return None
-        
+
         return self.distance_matrix().max(axis=0).tolist()[0]
-        
-        
-        
+
     def distances_from_vertex(self, v):
         """ Return list of all distances from a given vertex to all others"""
         # used to test graph where it is connected or not
-        seen={}  
-        level=0  
-        nextlevel=[v]
+        seen = {}
+        level = 0
+        nextlevel = [v]
         while nextlevel:
-            thislevel=nextlevel 
-            nextlevel=[] 
+            thislevel = nextlevel
+            nextlevel = []
             for v in thislevel:
-                if v not in seen: 
-                    seen[v]=level 
-                    nb = [i for (i,j) in zip(range(len(self.__A[v])), self.__A[v]) if j!=0]
+                if v not in seen:
+                    seen[v] = level
+                    nb = [
+                        i
+                        for (i, j) in zip(range(len(self.__A[v])), self.__A[v])
+                        if j != 0
+                    ]
                     nextlevel.extend(nb)
             #if (cutoff is not None and cutoff <= level):  break
-            level=level+1
+            level = level + 1
         return seen
-        
-        
-        
+
     def is_connected(self):
-        """ Return True/False depends on the graph is connected or not """ 
+        """ Return True/False depends on the graph is connected or not """
         if self.__Order == 0: return False
-        
-        if not self.__Check_connectedness : return True
-        
+
+        if not self.__Check_connectedness: return True
+
         if self.__Is_connected is None:
-            # we take vertex 0 and check whether we can reach all other vertices 
-            self.__Is_connected = len(self.distances_from_vertex(0)) == self.order()
+            # we take vertex 0 and check whether we can reach all other vertices
+            self.__Is_connected = len(
+                self.distances_from_vertex(0)) == self.order()
         return self.__Is_connected
-        
-        
-            
+
     #
     #
     # Graph spectra
     #
     #
-    
+
     def spectrum(self, matrix="adjacency"):
         r""" Spectrum of the graph
     
@@ -580,11 +581,11 @@ class Mol ():
                 arbitrary matrix
                 
         """
-        
+
         from numpy import linalg as la
-        
+
         if type(matrix) is str:
-        
+
             if self.__Order == 0: return []
 
             if matrix == "adjacency" or matrix == "A":
@@ -593,37 +594,40 @@ class Mol ():
                     s.sort(reverse=True)
                     self.__Spectrum = s
                 return self.__Spectrum
-                    
+
             elif matrix == "laplacian" or matrix == "L":
                 if self.__Laplacian_spectrum == []:
                     s = la.eigvalsh(self.laplacian_matrix()).tolist()
                     s.sort(reverse=True)
-                    self.__Laplacian_spectrum = map(lambda x: x if x>0 else 0,s)
+                    self.__Laplacian_spectrum = map(
+                        lambda x: x if x > 0 else 0, s)
                 return self.__Laplacian_spectrum
-                
+
             elif matrix == "distance" or matrix == "D":
                 if self.__Distance_spectrum == []:
                     s = la.eigvalsh(self.distance_matrix()).tolist()
                     s.sort(reverse=True)
                     self.__Distance_spectrum = s
-                return self.__Distance_spectrum  
-            
+                return self.__Distance_spectrum
+
             elif matrix == "signless_laplacian" or matrix == "Q":
                 if self.__Signless_laplacian_spectrum == []:
                     ## TODO: check if we have zeros in degrees()
                     s = la.eigvalsh(self.signless_laplacian_matrix()).tolist()
                     s.sort(reverse=True)
-                    self.__Signless_laplacian_spectrum = map(lambda x: x if x>0 else 0,s)
-                return self.__Signless_laplacian_spectrum  
-    
+                    self.__Signless_laplacian_spectrum = map(
+                        lambda x: x if x > 0 else 0, s)
+                return self.__Signless_laplacian_spectrum
+
             elif matrix == "normalized_laplacian" or matrix == "NL":
                 if self.__Norm_laplacian_spectrum == []:
                     ## TODO: check if we have zeros in degrees()
-                    s = la.eigvalsh(self.normalized_laplacian_matrix()).tolist()
+                    s = la.eigvalsh(
+                        self.normalized_laplacian_matrix()).tolist()
                     s.sort(reverse=True)
                     self.__Norm_laplacian_spectrum = s
-                return self.__Norm_laplacian_spectrum  
-    
+                return self.__Norm_laplacian_spectrum
+
             elif matrix == "resistance_distance" or matrix == "RD":
                 if self.__RD_spectrum == []:
                     s = la.eigvalsh(self.resistance_distance_matrix()).tolist()
@@ -631,22 +635,22 @@ class Mol ():
                     self.__RD_spectrum = s
                 return self.__RD_spectrum
             # NO CACHE
-            elif matrix == "reciprocal_distance" :
+            elif matrix == "reciprocal_distance":
                 s = la.eigvalsh(self.reciprocal_distance_matrix()).tolist()
                 s.sort(reverse=True)
                 return s
             else:
-                return False 
-                
-        # if the parameter is an arbitrary matrix            
+                return False
+
+        # if the parameter is an arbitrary matrix
         # DEPRECATED:
         # use mathchem.spectrum(matrix) for arbitrary matrices
-        # 
+        #
         else:
             s = la.eigvalsh(matrix).tolist()
             s.sort(reverse=True)
             return s
-    
+
     # for arbitrary matrices use:
     # mathchem.spectral_moment(matrix)
     def spectral_moment(self, k, matrix="adjacency"):
@@ -654,17 +658,16 @@ class Mol ():
         
         parameters: matrix - see spectrum help
         """
-        return np.sum(np.power(self.spectrum(matrix),k))
-        
+        return np.sum(np.power(self.spectrum(matrix), k))
+
     # for arbitrary matrices use:
-    # mathchem.spectral_radius(matrix)        
+    # mathchem.spectral_radius(matrix)
     def spectral_radius(self, matrix="adjacency"):
         s = self.spectrum(matrix)
-        return max(abs(s[0]), abs(s[len(s)-1]))
-        
-    
+        return max(abs(s[0]), abs(s[len(s) - 1]))
+
     # for arbitrary matrices use:
-    # mathchem.energy(matrix)    
+    # mathchem.energy(matrix)
     def energy(self, matrix="adjacency"):
         """ Return energy of the graph 
         
@@ -672,10 +675,10 @@ class Mol ():
         """
         if self.__Order == 0: return False
         s = self.spectrum(matrix)
-        a = np.sum(s,dtype=np.longdouble)/len(s)
-        return np.float64(np.sum( map( lambda x: abs(x-a) ,s), dtype=np.longdouble))
-                
-                
+        a = np.sum(s, dtype=np.longdouble) / len(s)
+        return np.float64(
+            np.sum(map(lambda x: abs(x - a), s), dtype=np.longdouble))
+
     def incidence_energy(self):
         """ Return incidence energy (IE)
             
@@ -683,87 +686,105 @@ class Mol ():
         """
         if self.__Order == 0: return False
         from numpy.linalg import svd
-        return np.float64(np.sum(svd(self.incidence_matrix(), compute_uv=False), dtype=np.longdouble))
+        return np.float64(
+            np.sum(svd(self.incidence_matrix(), compute_uv=False),
+                   dtype=np.longdouble))
 
     #
     #
     # Chemical indices
     #
     #
-    
+
     def zagreb_m1_index(self):
-        """ Zagreb M1 Index """    
+        """ Zagreb M1 Index """
         return sum(map(lambda d: d**2, self.degrees()))
-        
-    
+
     def zagreb_m2_index(self):
         """ Zagreb M2 Index 
         
         The molecular graph must contain at least one edge, otherwise the function Return False
         Zagreb M2 Index is a special case of Connectivity Index with power = 1"""
-        return sum( map(lambda (e1, e2): self.degrees()[e1]*self.degrees()[e2] , self.edges()) )    
+        return sum(
+            map(lambda e1, e2: self.degrees()[e1] * self.degrees()[e2],
+                self.edges()))
 
     def zagreb_m1_coindex(self):
         """ Zagreb M1 Coindex """
-        return 2*self.size()*(self.__Order-1)-self.zagreb_m1_index()
-            
+        return 2 * self.size() * (self.__Order - 1) - self.zagreb_m1_index()
+
     def zagreb_m2_coindex(self):
         """ Zagreb M2 Coindex """
-        return 2*(self.size()**2) - self.zagreb_m2_index() - self.zagreb_m1_index()*.5
-    
+        return 2 * (self.size()**
+                    2) - self.zagreb_m2_index() - self.zagreb_m1_index() * .5
+
     def connectivity_index(self, power):
         """ Connectivity index (R)"""
-        E = self.edges() # E - all edges
+        E = self.edges()  # E - all edges
         if len(E) == 0: return 0
-        return np.float64(np.sum( map(lambda (e1 ,e2): ( self.degrees()[e1]*self.degrees()[e2] ) ** power , E) , dtype=np.longdouble))
+        return np.float64(
+            np.sum(map(
+                lambda e1, e2:
+                (self.degrees()[e1] * self.degrees()[e2])**power, E),
+                   dtype=np.longdouble))
 
     def augmented_zagreb_index(self):
         """ Augmented Zagreb Index"""
-        E = self.edges() # E - all edges
+        E = self.edges()  # E - all edges
         d = self.degrees()
         if len(E) < 2: return 0
-        return np.float64(np.sum( map(lambda (e1 ,e2): (np.longdouble(d[e1]*d[e2]) / (d[e1]+d[e2]-2)) **3, E) , dtype=np.longdouble))
+        return np.float64(
+            np.sum(map(
+                lambda e1, e2: (np.longdouble(d[e1] * d[e2]) /
+                                (d[e1] + d[e2] - 2))**3, E),
+                   dtype=np.longdouble))
 
     def sum_connectivity_index(self):
         """ Sum-Connectivity index"""
-        E = self.edges() # E - all edges
+        E = self.edges()  # E - all edges
         if len(E) == 0: return 0
-        return np.float64(np.sum( map(lambda (e1 ,e2): ( self.degrees()[e1]+self.degrees()[e2] ) ** (-0.5) , E) , dtype=np.longdouble)) 
-        
+        return np.float64(
+            np.sum(map(
+                lambda e1, e2:
+                (self.degrees()[e1] + self.degrees()[e2])**(-0.5), E),
+                   dtype=np.longdouble))
+
     def geometric_arithmetic_index(self):
         """ Geometric-Arithmetic index"""
-        E = self.edges() # E - all edges
+        E = self.edges()  # E - all edges
         if len(E) == 0: return 0
-        return np.float64(np.sum( map(lambda (e1 ,e2): 2.0*np.sqrt(self.degrees()[e1]*self.degrees()[e2] ) / (self.degrees()[e1]+self.degrees()[e2])  , E) , dtype=np.longdouble)) 
-           
+        return np.float64(
+            np.sum(map(
+                lambda e1, e2: 2.0 * np.sqrt(self.degrees()[e1] * self.degrees(
+                )[e2]) / (self.degrees()[e1] + self.degrees()[e2]), E),
+                   dtype=np.longdouble))
+
     def eccentric_connectivity_index(self):
         """ Eccentric Connectivity Index 
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
-            return False 
-        return sum( map( lambda a,b: a*b, self.degrees(), self.eccentricity() ) )
-        
-    
+            return False
+        return sum(map(lambda a, b: a * b, self.degrees(),
+                       self.eccentricity()))
+
     def randic_index(self):
         """ Randic Index 
         
         The molecular graph must contain at least one edge, otherwise the function Return False
         Randic Index is a special case of Connectivity Index with power = -1/2"""
         return self.connectivity_index(-0.5)
-                        
 
     def atom_bond_connectivity_index(self):
         """ Atom-Bond Connectivity Index (ABC) """
-        s = np.longdouble(0) # summator
-        for (u,v) in self.edges():
+        s = np.longdouble(0)  # summator
+        for u, v in self.edges():
             d1 = np.float64(self.degrees()[u])
             d2 = np.float64(self.degrees()[v])
-            s += np.longdouble( ( (d1 + d2 - 2 ) / (d1 * d2)) ** .5 )
+            s += np.longdouble(((d1 + d2 - 2) / (d1 * d2))**.5)
         return np.float64(s)
-    
-    
-    def estrada_index(self, matrix = "adjacency"):
+
+    def estrada_index(self, matrix="adjacency"):
         """ Estrada Index (EE)  
         
         args:
@@ -771,82 +792,87 @@ class Mol ():
             
         There is an alias 'distance_estrada_index' for distance matrix
         """
-        return np.float64(np.sum( map( lambda x: np.exp( x.real ) , self.spectrum(matrix) ) ,dtype=np.longdouble )) 
-        
-        
+        return np.float64(
+            np.sum(map(lambda x: np.exp(x.real), self.spectrum(matrix)),
+                   dtype=np.longdouble))
+
     def distance_estrada_index(self):
         """ Distance Estrada Index (DEE) 
         
         Special case of Estrada index with distance matrix
         """
         return self.estrada_index('distance')
-    
-    
-    
+
     def degree_distance(self):
         """ Degree Distance (DD)
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
-            return False      
+            return False
         dd = np.matrix(self.degrees()) * self.distance_matrix().sum(axis=1)
-        return dd[0,0]
-        
+        return dd[0, 0]
+
     def reverse_degree_distance(self):
         """ Reverse Distance Degree (rDD)
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
-            return False 
-        return 2*( self.order()-1 ) * len(self.edges()) * self.diameter() - self.degree_distance()
-    
-    
+            return False
+        return 2 * (self.order() - 1) * len(
+            self.edges()) * self.diameter() - self.degree_distance()
+
     def molecular_topological_index(self):
         """ (Schultz) Molecular Topological Index (MTI)
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
-            return False 
+            return False
         # (A+D)*d
 
         A = np.matrix(self.__A)
         d = np.matrix(self.degrees())
-        return np.float64(( (A + self.distance_matrix()) * d.T ).sum(dtype=np.longdouble))
-    
-        
+        return np.float64(
+            ((A + self.distance_matrix()) * d.T).sum(dtype=np.longdouble))
+
     def eccentric_distance_sum(self):
         """ Distance Sum
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
-            return False 
-        return (self.eccentricity() * self.distance_matrix().sum(axis=1))[0,0]
-    
-    
+            return False
+        return (self.eccentricity() * self.distance_matrix().sum(axis=1))[0, 0]
+
     # strange - it is slow ((
     def balaban_j_index(self):
         """ Balaban J index 
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
-            return False 
+            return False
         ds = self.distance_matrix().sum(axis=1)
         m = len(self.edges())
-        k = (m / ( m - self.__Order +2.0 ))
-        return np.float64(k * np.sum( map(lambda (u ,v): 1 / np.sqrt((ds[u][0,0]*ds[v][0,0])), self.edges() ), dtype=np.longdouble))
-        
+        k = (m / (m - self.__Order + 2.0))
+        return np.float64(
+            k *
+            np.sum(map(lambda u, v: 1 / np.sqrt(
+                (ds[u][0, 0] * ds[v][0, 0])), self.edges()),
+                   dtype=np.longdouble))
+
     def sum_balaban_index(self):
         """ Sum Balaban index 
         
         The molecuar graph must be connected, otherwise the function Return False"""
         if not self.is_connected():
-            return False 
+            return False
         ds = self.distance_matrix().sum(axis=1)
         m = len(self.edges())
-        k = (m / ( m - self.__Order +2.0 ))
-        return np.float64(k * np.sum( map(lambda (u ,v): 1 / np.sqrt((ds[u][0,0]+ds[v][0,0])), self.edges() ), dtype=np.longdouble))
-    
-        
+        k = (m / (m - self.__Order + 2.0))
+        return np.float64(
+            k *
+            np.sum(map(lambda u, v: 1 / np.sqrt(
+                (ds[u][0, 0] + ds[v][0, 0])), self.edges()),
+                   dtype=np.longdouble))
+
     def kirchhoff_index(self):
         """ Kirchhoff Index (Kf)
         
@@ -858,11 +884,12 @@ class Mol ():
         The molecuar graph must be connected, otherwise the function Return False
         """
         if not self.is_connected():
-            return False 
-        return np.float64(self.resistance_distance_matrix().sum(dtype=np.longdouble) / 2)
-        
+            return False
+        return np.float64(
+            self.resistance_distance_matrix().sum(dtype=np.longdouble) / 2)
+
     resistance = kirchhoff_index
-    
+
     def wiener_index(self):
         """ Wiener Index (W)
         
@@ -871,9 +898,9 @@ class Mol ():
         The molecuar graph must be connected, otherwise the function Return False
         """
         if not self.is_connected():
-            return False 
+            return False
         return self.distance_matrix().sum(dtype=np.float64) / 2
-        
+
     def terminal_wiener_index(self):
         """ Calculate Terminal Wiener Index (TW)
         
@@ -883,9 +910,9 @@ class Mol ():
         s = 0
         for u in range(self.order()):
             if self.degrees()[u] != 1: continue
-            for v in range(u+1, self.order()):
+            for v in range(u + 1, self.order()):
                 if self.degrees()[v] == 1:
-                    s = s + self.distance_matrix()[u,v]
+                    s = s + self.distance_matrix()[u, v]
         return s
 
     def reverse_wiener_index(self):
@@ -897,10 +924,11 @@ class Mol ():
         The molecuar graph must be connected, otherwise the function Return False
         """
         if not self.is_connected():
-            return False 
+            return False
         # here we use formula: RW = 1/2 * n * (n-1) * d - W
-        return  self.diameter() * (self.__Order * (self.__Order - 1)) / 2 - self.wiener_index()
-        
+        return self.diameter() * (
+            self.__Order * (self.__Order - 1)) / 2 - self.wiener_index()
+
     def hyper_wiener_index(self):
         """ Hyper-Wiener Index (WW)
         
@@ -910,10 +938,11 @@ class Mol ():
         The molecuar graph must be connected, otherwise the function Return False
         """
         if not self.is_connected():
-            return False         
-        return ( np.power(self.distance_matrix(),2).sum() + self.distance_matrix().sum() ) / 4 # since we have symmetric matrix
-        
-        
+            return False
+        return (
+            np.power(self.distance_matrix(), 2).sum() +
+            self.distance_matrix().sum()) / 4  # since we have symmetric matrix
+
     def harary_index(self):
         """ Harary Index (H)
         
@@ -925,93 +954,101 @@ class Mol ():
         The molecuar graph must be connected, otherwise the function Return False
         """
         if not self.is_connected():
-            return False         
-        return np.float64(self.reciprocal_distance_matrix().sum(dtype=np.longdouble))/2
-        
+            return False
+        return np.float64(
+            self.reciprocal_distance_matrix().sum(dtype=np.longdouble)) / 2
+
     def LEL(self):
         """ Return Laplacian-like energy (LEL) """
-        return np.float64(np.sum( map( lambda x: np.sqrt(x) ,self.spectrum('laplacian')), dtype=np.longdouble))
+        return np.float64(
+            np.sum(map(lambda x: np.sqrt(x), self.spectrum('laplacian')),
+                   dtype=np.longdouble))
 
     def multiplicative_sum_zagreb_index(self):
-        """ Log( Multiplicative Sum Zagreb index )""" 
+        """ Log( Multiplicative Sum Zagreb index )"""
         d = self.degrees()
-        return np.float64(np.sum( map( lambda (u,v): np.log(np.float64(d[u]+d[v])), self.edges()) , dtype=np.longdouble))
-        
+        return np.float64(
+            np.sum(map(lambda u, v: np.log(np.float64(d[u] + d[v])),
+                       self.edges()),
+                   dtype=np.longdouble))
+
     def multiplicative_p2_zagreb_index(self):
-        """Calculates Log( Multiplicative P2 Zagreb index )""" 
+        """Calculates Log( Multiplicative P2 Zagreb index )"""
         d = self.degrees()
-        return np.float64(np.sum( map( lambda (u,v): np.log(np.float64(d[u]*d[v])), self.edges()) , dtype=np.longdouble))
-    
+        return np.float64(
+            np.sum(map(lambda u, v: np.log(np.float64(d[u] * d[v])),
+                       self.edges()),
+                   dtype=np.longdouble))
+
     def multiplicative_p1_zagreb_index(self):
-        """Calculates Log( Multiplicative P1 Zagreb index )""" 
+        """Calculates Log( Multiplicative P1 Zagreb index )"""
         d = self.degrees()
-        return np.float64(np.sum( map( lambda v: np.log(np.float64(d[v]**2)), self.vertices()) , dtype=np.longdouble))
-        
-    
+        return np.float64(
+            np.sum(map(lambda v: np.log(np.float64(d[v]**2)), self.vertices()),
+                   dtype=np.longdouble))
+
     def szeged_index(self):
         """Calculates Szeged index"""
         if not self.is_connected():
-            return False  
+            return False
         s = 0
         D = self.distance_matrix()
-        for u,v in self.edges():
-            diff = D[u,:] - D[v,:]
-            s += (diff>0).sum()*(diff<0).sum()
+        for u, v in self.edges():
+            diff = D[u, :] - D[v, :]
+            s += (diff > 0).sum() * (diff < 0).sum()
         return float(s)
-        
-        
+
     def revised_szeged_index(self):
         """Calculates Revised Szeged index"""
         if not self.is_connected():
-            return False  
+            return False
         s = 0.0
         D = self.distance_matrix()
-        for u,v in self.edges():
-            diff = D[u,:] - D[v,:]
-            o = (diff==0).sum()
-            s += ((diff>0).sum()+.5*o)*((diff<0).sum()+.5*o)
+        for u, v in self.edges():
+            diff = D[u, :] - D[v, :]
+            o = (diff == 0).sum()
+            s += ((diff > 0).sum() + .5 * o) * ((diff < 0).sum() + .5 * o)
         return s
-        
-        
+
     def homo_lumo_index(self):
-        """Calculates HOMO-LUMO index"""    
+        """Calculates HOMO-LUMO index"""
         if not self.is_connected():
             return False
         n = self.order()
-        if n%2 == 0:
-            h = int(n/2 -1) # because array indices start from 0 instead of 1
-            l = int(h+1)
-            return max([ abs(self.spectrum()[h]), abs(self.spectrum()[l]) ])
+        if n % 2 == 0:
+            h = int(n / 2 -
+                    1)  # because array indices start from 0 instead of 1
+            l = int(h + 1)
+            return max([abs(self.spectrum()[h]), abs(self.spectrum()[l])])
         # else:
-        h = int((n-1)/2)
+        h = int((n - 1) / 2)
         return abs(self.spectrum()[h])
-        
+
     HL_index = homo_lumo_index
-    
+
     # Adriatic indices
 
-    
     # DEPRECATED
     # use mathchem.all_adriatic()
-    
+
     def all_adriatic(self):
         """ Generate all possible parameters sets for adriatic indices"""
         r = []
-        for p in [0,1]:
-            for i in [1,2,3]:
-                for j in range(1,9):
+        for p in [0, 1]:
+            for i in [1, 2, 3]:
+                for j in range(1, 9):
                     if i == 3:
                         for a in [0.5, 2]:
-                            r.append((p,i,j,a))
-                    elif i == 2 and j in range(1,6):
+                            r.append((p, i, j, a))
+                    elif i == 2 and j in range(1, 6):
                         for a in [-1, -0.5, 0.5, 1, 2]:
-                            r.append((p,i,j,a))
+                            r.append((p, i, j, a))
                     elif i == 2 or i == 1:
                         for a in [0.5, 1, 2]:
-                            r.append((p,i,j,a))
-        return r    
-        
-    def adriatic_name(self,p,i,j,a):
+                            r.append((p, i, j, a))
+        return r
+
+    def adriatic_name(self, p, i, j, a):
         """ Return the name for given parameters of Adriatic indices"""
         #(j)
         name1 = {1:'Randic type ',\
@@ -1022,7 +1059,7 @@ class Mol ():
                  6:'min-max ', \
                  7:'max-min ', \
                  8:'symmetric division '}
-        # (i,a)         
+        # (i,a)
         name2 = {(1, 0.5):'lor',\
                  (1,1):'lo', \
                  (1,2):'los', \
@@ -1033,16 +1070,19 @@ class Mol ():
                  (2,2):'s', \
                  (3, 0.5):'ha', \
                  (3,2):'two'}
-        #(p)         
-        name3 = {0:'deg', 1:'di'}
-        
-        return(name1[j]+name2[(i,a)]+name3[p])
-        
-        
-    def _adriatic_entry_(self,du,dv,i,j,a):
+        #(p)
+        name3 = {0: 'deg', 1: 'di'}
+
+        return (name1[j] + name2[(i, a)] + name3[p])
+
+    def _adriatic_entry_(self, du, dv, i, j, a):
         """ Return an individual edge contribution for Adriatic indices and matrices"""
         # phi(x,a)
-        phi = {1: lambda x,a: np.log(x)**a, 2: lambda x,a: x**a, 3: lambda x,a: a**x}
+        phi = {
+            1: lambda x, a: np.log(x)**a,
+            2: lambda x, a: x**a,
+            3: lambda x, a: a**x
+        }
         # gamma (x,y)
         gamma = {\
         1: lambda x,y: x*y,\
@@ -1053,34 +1093,35 @@ class Mol ():
         6: lambda x,y: 0 if max(x,y)==0 else min(x,y)/max(x,y),\
         7: lambda x,y: 0 if min(x,y)==0 else max(x,y)/min(x,y),\
         8: lambda x,y: 0 if x==0 or y==0 else x/y+y/x}
-        
-        return gamma[j](phi[i](du,a), phi[i](dv,a))
-        
-        
-    def adriatic_matrix(self,p,i,j,a):
+
+        return gamma[j](phi[i](du, a), phi[i](dv, a))
+
+    def adriatic_matrix(self, p, i, j, a):
         """ Return the Adriatic matrix with given parameters"""
-        
-        if p==0: d = self.degrees()
+
+        if p == 0: d = self.degrees()
         else: d = self.distance_matrix().sum(axis=0).tolist()[0]
-        
+
         AM = [[0] * self.order() for k in range(self.order())]
-        
-        for (u,v) in self.edges():
-            AM[u][v] = AM[v][u] = self._adriatic_entry_(np.float64(d[u]), np.float64(d[v]), i,j,a)
-        
+
+        for u, v in self.edges():
+            AM[u][v] = AM[v][u] = self._adriatic_entry_(
+                np.float64(d[u]), np.float64(d[v]), i, j, a)
+
         return AM
-    
-    def adriatic_index(self,p,i,j,a):
+
+    def adriatic_index(self, p, i, j, a):
         """ Return the Adriatic index with given parameters"""
 
-        if p==0: d = self.degrees()
+        if p == 0: d = self.degrees()
         else: d = self.distance_matrix().sum(axis=0).tolist()[0]
-        
-        func  = lambda (u, v) : self._adriatic_entry_(np.float64(d[u]), np.float64(d[v]), i,j,a)
-        return np.float64(np.sum( map( func, self.edges()) , dtype=np.longdouble))
-    
+
+        func = lambda u, v: self._adriatic_entry_(np.float64(d[u]),
+                                                  np.float64(d[v]), i, j, a)
+        return np.float64(np.sum(map(func, self.edges()), dtype=np.longdouble))
+
     # Adriatic indices by names
-    
+
     def randic_type_lordeg_index(self):
         """ Adriatic index: Randic type lordeg index"""
         return self.adriatic_index(0, 1, 1, 0.5)
@@ -1672,5 +1713,3 @@ class Mol ():
     def symmetric_division_twodi_index(self):
         """ Adriatic index: symmetric division twodi index"""
         return self.adriatic_index(1, 3, 8, 2)
-
-    
